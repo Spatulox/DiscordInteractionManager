@@ -74,8 +74,8 @@ export interface SlashCommandConfig {
     default_member_permissions?: string;
     default_member_permissions_string?: PermissionString[];
     dm_permission: boolean;
-    integration_types?: (0 | 1)[];
-    contexts?: (0 | 1 | 2)[];
+    integration_types?: InteractionIntegrationType[];
+    contexts?: InteractionContextType[];
     guild_ids?: string[];
 }
 
@@ -85,7 +85,7 @@ export interface ContextMenuConfig {
     default_member_permissions?: string[];
     default_member_permissions_string?: PermissionString[];
     dm_permission: boolean;
-    integration_types?: (0 | 1)[];
-    contexts?: (0 | 1 | 2)[];
+    integration_types?: InteractionIntegrationType[];
+    contexts?: InteractionContextType[];
     guild_ids?: string[];
 }
