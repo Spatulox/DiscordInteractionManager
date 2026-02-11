@@ -1,6 +1,5 @@
 import {BaseCLI, MenuSelectionCLI} from "../BaseCLI";
 import {ContextMenuGeneratorCLI} from "./ContextMenuGeneratorCLI";
-import {ModalGeneratorCLI} from "./ModalGeneratorCLI";
 import {SlashCommandGeneratorCLI} from "./SlashCommandsGeneratorCLI";
 
 export class GenerationCLI extends BaseCLI {
@@ -12,7 +11,6 @@ export class GenerationCLI extends BaseCLI {
     protected readonly menuSelection: MenuSelectionCLI = [
         { label: 'Generate Slash Command Template', action: () => new SlashCommandGeneratorCLI(this) },
         { label: 'Generate Context Menu Template', action: () => new ContextMenuGeneratorCLI(this) },
-        { label: 'Generate Modal Template', action: () => new ModalGeneratorCLI(this) },
         { label: 'Back', action: () => this.goBack() },
     ];
 
