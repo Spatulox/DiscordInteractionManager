@@ -51,8 +51,7 @@ export class GuildListManager extends BaseCLI {
             ) as Guild[]
 
             if(printResult){
-                console.table(this.guilds.map((g, i) => ({
-                    Index: i,
+                console.table(this.guilds.map((g, _i) => ({
                     "Guild ID": g.id,
                     Nom: g.name
                 })));
