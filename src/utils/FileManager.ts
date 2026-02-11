@@ -1,9 +1,6 @@
-// src/filesystem/FileManager.ts
 import path from 'path';
 import fs from 'fs/promises';
-import { Log } from '../utils/Log.js';
-import { TextChannel } from 'discord.js';
-import { createErrorEmbed, returnToSendEmbed } from '../messages/embeds.js';
+import {Log} from "./Log";
 
 export class FileManager {
     /**
@@ -29,10 +26,9 @@ export class FileManager {
     static async listDirectories(directoryPath: string): Promise<string[] | false> {
         try {
             const files = await fs.readdir(directoryPath, { withFileTypes: true });
-            const directories = files
+            return files
                 .filter(file => file.isDirectory())
                 .map(dir => dir.name);
-            return directories;
         } catch (error) {
             Log.error(`Failed to read directory ${directoryPath}: ${error}`);
             return false;
@@ -61,11 +57,6 @@ export class FileManager {
      * @returns Array of matching filenames or 'Error' string on failure
      */
     static async listFiles(directoryPath: string, extension: string): Promise<string[] | false> {
-        if (typeof directoryPath !== 'string' || typeof extension !== 'string') {
-            Log.error('Directory path and extension must be strings');
-            return false;
-        }
-
         try {
             let ext = extension;
             if (ext.startsWith('.')) {
@@ -85,14 +76,12 @@ export class FileManager {
      * @param directoryPath Full directory path (creates if missing)
      * @param filename Filename without extension
      * @param data Data to write (JSON serializable)
-     * @param channel Optional Discord channel for error notifications
      * @returns true on success, false on failure
      */
     static async writeJsonFile(
         directoryPath: string,
         filename: string,
-        data: any,
-        channel: TextChannel | null = null
+        data: any
     ): Promise<boolean> {
         // Skip if data is an Error array
         if (Array.isArray(data) && data.length === 1 && data[0] === 'Error') {
@@ -130,18 +119,6 @@ export class FileManager {
         } catch (error) {
             const cleanFilename = filename.replace(/\.json$/i, '') || 'unknown';
             Log.error(`Failed to write file ${directoryPath}/${cleanFilename}.json: ${error}`);
-
-            if (channel) {
-                try {
-                    await channel.send(
-                        returnToSendEmbed(
-                            createErrorEmbed(`Failed to write file ${directoryPath}/${cleanFilename}.json: ${error}`)
-                        )
-                    );
-                } catch (sendError) {
-                    Log.error(`Failed to send Discord error message: ${sendError}`);
-                }
-            }
             return false;
         }
     }
