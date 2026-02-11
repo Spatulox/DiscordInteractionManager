@@ -16,9 +16,7 @@
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
-    "@types/node-schedule": "^2.1.7",
     "dotenv": "^17.2.4",
-    "nodemon": "^3.1.9",
     "tsx": "^4.20.3",
     "typescript": "^5.9.3"
   },
