@@ -41,8 +41,20 @@ export abstract class BaseInteractionManager {
         this.rest = new REST({ version: '10' }).setToken(token);
     }
 
-    async listFromFile(): Promise<Command[]> {
-        console.log(`Listing Handlers (${this.folderPath}) not deployed on discord`);
+    async printInteraction(cmdList: Command[]): Promise<void> {
+        console.table(
+            cmdList.map((cmd: Command) => ({
+                Nom: cmd.name,
+                Type: cmd.type === CommandType.SLASH ? 'Slash' :
+                    cmd.type === CommandType.USER_CONTEXT_MENU ? 'User Context Menu' : 'Message Context Menu',
+                Description: cmd.description,
+                Permissions: cmd.default_member_permissions_string?.join(", "),
+                ID: cmd.id
+            })));
+    }
+
+    async listFromFile(avoidDeployedInteraction: boolean = true): Promise<Command[]> {
+        console.log(`Listing Local Handlers (${this.folderPath})${avoidDeployedInteraction ? " not":""} deployed on discord`);
 
         try {
             const files = await FileManager.listJsonFiles(`${Env.interactionFolderPath}/${this.folderPath}`);
@@ -53,29 +65,21 @@ export abstract class BaseInteractionManager {
 
             const commandList: Command[] = [];
 
-            for (const [index, file] of files.entries()) {
+            for (const [_index, file] of files.entries()) {
                 const cmd = await this.readInteraction(`${Env.interactionFolderPath}/${this.folderPath}/${file}`);
-                if (!cmd || cmd.id) continue;
+                if (!cmd || (cmd.id && avoidDeployedInteraction)) continue;
 
                 const commandWithIndex = {
                     ...cmd,
-                    index: index,
+                    //index: index,
                     filename: file
                 };
                 commandList.push(commandWithIndex as Command);
             }
 
-            console.log(`✅ ${commandList.length} local ${this.folderPath}(s) not deployed\n`);
+            console.log(`✅ ${commandList.length} local ${this.folderPath}(s) found\n`);
 
-            console.table(
-                commandList.map((cmd: any) => ({
-                    Nom: cmd.name,
-                    Type: cmd.type === CommandType.SLASH ? 'Slash' :
-                        cmd.type === CommandType.USER_CONTEXT_MENU ? 'User' : 'Message',
-                    Description: cmd.description,
-                    Fichier: cmd.filename
-                }))
-            );
+            await this.printInteraction(commandList);
 
             return commandList;
         } catch (error) {
@@ -93,14 +97,14 @@ export abstract class BaseInteractionManager {
         printResult: boolean = true,
     ): Promise<Command[]> {
         const scopeLabel = scope === 'global' ? 'global' : `guild ${scope}`;
-        console.log(`Handlers ${this.folderPath} on Discord (${scopeLabel})...`);
+        console.log(`Listing Deployed Handlers ${this.folderPath} on Discord (${scopeLabel})...`);
 
         try {
             const rawCmds = await this.rest.get(endpoint) as any[];
             const commands = rawCmds.filter(cmd => this.commandType.includes(cmd.type));
 
-            const commandList: Command[] = commands.map((cmd: any, index: number) => ({
-                index: index,
+            const commandList: Command[] = commands.map((cmd: any, _index: number) => ({
+                //index: index,
                 name: cmd.name,
                 type: cmd.type,
                 description: cmd.description || 'N/A',
@@ -112,16 +116,7 @@ export abstract class BaseInteractionManager {
 
             if(printResult) {
                 console.log(`✅ ${commandList.length} ${this.folderPath}(s) found\n`);
-
-                console.table(
-                    commandList.map((cmd: Command) => ({
-                        Nom: cmd.name,
-                        Type: cmd.type === CommandType.SLASH ? 'Slash' :
-                            cmd.type === CommandType.USER_CONTEXT_MENU ? 'User Context Menu' : 'Message Context Menu',
-                        Description: cmd.description,
-                        Permissions: cmd.default_member_permissions_string?.join(", "),
-                        ID: cmd.id
-                    })));
+                await this.printInteraction(commandList);
             }
 
             return commandList;
@@ -253,10 +248,15 @@ export abstract class BaseInteractionManager {
                 continue;
             }
 
+            cmd.default_member_permissions = this.permissionsToBitfield(cmd.default_member_permissions_string);
+
             try {
                 await this.rest.patch(Routes.applicationCommand(this.clientId, cmd.id), {
-                    body: { description: `${cmd.description} (Updated ${new Date().toISOString()})` }
+                    body: cmd
                 });
+                if(cmd.filename){ // should be a thing since we list files with the this.listFromFile()
+                    await this.saveInteraction(cmd.filename, cmd)
+                }
                 console.log(`${cmd.name} updated`);
             } catch (error) {
                 Log.error(`${cmd.name}: ${(error as Error).message}`);
