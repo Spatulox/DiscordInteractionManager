@@ -8,8 +8,8 @@ export const Env = {
         if (!token) throw new Error('Missing environment variable : DISCORD_BOT_TOKEN');
         return token;
     },
-    get dev(): boolean {
-        return process.env.DEV === 'true';
+    get interactionFolderPath(): string {
+        return process.env.DISCORD_INTERACTION_FOLDER ? process.env.DISCORD_INTERACTION_FOLDER : "./handlers";
     },
     get clientId(): string {
         const token = process.env.DISCORD_BOT_CLIENTID;

@@ -6,6 +6,7 @@ import * as fs from 'fs/promises';
 import {Log} from "../../utils/Log";
 import {Guild} from "../GuildListManager";
 import {FileManager} from "../../utils/FileManager";
+import {Env} from "../../Env";
 
 // Types
 export interface Command {
@@ -44,7 +45,7 @@ export abstract class BaseInteractionManager {
         console.log(`Listing Handlers (${this.folderPath}) not deployed on discord`);
 
         try {
-            const files = await FileManager.listJsonFiles(`./handlers/${this.folderPath}`);
+            const files = await FileManager.listJsonFiles(`${Env.interactionFolderPath}/${this.folderPath}`);
             if (!files || files.length === 0) {
                 console.log('No files found');
                 return [];
@@ -53,7 +54,7 @@ export abstract class BaseInteractionManager {
             const commandList: Command[] = [];
 
             for (const [index, file] of files.entries()) {
-                const cmd = await this.readInteraction(`./handlers/${this.folderPath}/${file}`);
+                const cmd = await this.readInteraction(`${Env.interactionFolderPath}/${this.folderPath}/${file}`);
                 if (!cmd || cmd.id) continue;
 
                 const commandWithIndex = {
@@ -330,20 +331,20 @@ export abstract class BaseInteractionManager {
 
     private async saveInteraction(fileName: string, cmd: Command): Promise<void> {
         delete cmd.filename
-        const filePath = `./handlers/${this.folderPath}/${fileName}`;
+        const filePath = `${Env.interactionFolderPath}/${this.folderPath}/${fileName}`;
         await fs.writeFile(filePath, JSON.stringify(cmd, null, 2));
     }
 
     private async removeLocalIdFromFile(idListToDelete: string[]): Promise<void> {
 
-        const files = await FileManager.listJsonFiles(`./handlers/${this.folderPath}`);
+        const files = await FileManager.listJsonFiles(`${Env.interactionFolderPath}/${this.folderPath}`);
         if (!files || files.length === 0) {
             console.log('No local files to clean');
             return
         }
 
         for (const file of files) {
-            const filePath = `./handlers/${this.folderPath}/${file}`;
+            const filePath = `${Env.interactionFolderPath}/${this.folderPath}/${file}`;
             const localCmd = await this.readInteraction(filePath);
 
             if (localCmd && localCmd.id && idListToDelete.includes(localCmd.id)) {

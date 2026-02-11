@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 import readline from "readline";
 import {FileManager} from "../utils/FileManager";
+import {Env} from "../Env";
 
 export type MenuSelectionCLI = {
     label: string; // The Label for the Menu Choice
@@ -120,7 +121,7 @@ export abstract class BaseCLI {
         console.log('');
         console.log('How you need to save your interaction files');
         console.log('📁 Folder Structure:');
-        console.log('  ├── handlers/         ← In the root folder of your project');
+        console.log(`  ├── ${Env.interactionFolderPath}/`);
         console.log('  │   ├── commands/     ← Slash Commands (type 1)');
         console.log('  │   └── context_menu/ ← Context Menus (type 2/3)');
 
@@ -163,7 +164,7 @@ export abstract class BaseCLI {
         data: T,
     ): Promise<void> {
         let finalFilename = filename;
-        if(await FileManager.readJsonFile(`./handlers/${folderName}/${filename.split(".json")[0] + ".json"}`)){
+        if(await FileManager.readJsonFile(`${Env.interactionFolderPath}/${folderName}/${filename.split(".json")[0] + ".json"}`)){
             if (!await this.yesNoInput(`"${finalFilename}" already exists. Overwrite? (y/n): `)) {
                 const timestamp = Date.now();
                 finalFilename = `${filename.replace('.json', '')}-${timestamp}`;
@@ -183,8 +184,8 @@ export abstract class BaseCLI {
         }
 
         try {
-            await FileManager.writeJsonFile(`./handlers/${folderName}`, finalFilename, data);
-            console.log(`File saved: ./handlers/${folderName}/${finalFilename}`);
+            await FileManager.writeJsonFile(`${Env.interactionFolderPath}/${folderName}`, finalFilename, data);
+            console.log(`File saved: ${Env.interactionFolderPath}/${folderName}/${finalFilename}`);
         } catch (error) {
             console.error("Error saving file:", error);
         }
