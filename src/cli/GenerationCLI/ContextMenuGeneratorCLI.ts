@@ -1,12 +1,11 @@
-import {BaseCLI, MenuSelectionCLI} from "../BaseCLI";
-import {ContextMenuConfig} from "../type/ContextMenuConfig";
-import {PermissionFlagsBits} from "discord.js";
-import {DiscordRegex} from "../../utils/DiscordRegex";
-import {FolderName} from "../../type/FolderName";
+import { MenuSelectionCLI } from "../BaseCLI";
+import { FolderName } from "../../type/FolderName";
+import {ContextMenuConfig} from "../type/InteractionType";
+import {InteractionGeneratorCLI} from "./InteractionGeneratorCLI";
 
-export class ContextMenuGeneratorCLI extends BaseCLI {
+export class ContextMenuGeneratorCLI extends InteractionGeneratorCLI {
     protected getTitle(): string {
-        return "📝 Context Menu JSON Generator";
+        return "🍽️ Context Menu JSON Generator";
     }
 
     protected readonly menuSelection: MenuSelectionCLI = [
@@ -15,120 +14,43 @@ export class ContextMenuGeneratorCLI extends BaseCLI {
     ];
 
     protected async execute(): Promise<void> {
-        const config: ContextMenuConfig = {dm_permission: false, integration_types: [], name: "", type: 2};
+        const config: ContextMenuConfig = {
+            name: "",
+            type: 2,
+            dm_permission: false,
+            integration_types: [0, 1]
+        };
 
-        // 1. Context Menu Name
+        // 1. Type & Nom
         console.clear();
-        console.log("👤 1/10 - Name");
-        config.name = await this.requireInput("Enter Context Menu name (ex: 'Example context Menu'): ");
+        console.log("🍽️ 1/5 - Menu Type");
+        console.log("2 = User Menu | 3 = Message Menu");
+        config.type = parseInt(await this.requireInput("Type (2 or 3): ", val => ["2", "3"].includes(val))) as 2 | 3;
 
-        // 2. Type (2=User, 3=Message)
         console.clear();
-        console.log("🔧 2/10 - Type");
-        console.log("2 => Context Menu for users");
-        console.log("3 => Context Menu for messages");
-        config.type = parseInt(
-            await this.requireInput("Enter type (2 or 3): ", val => ["2", "3"].includes(val))
-        ) as 2 | 3;
+        config.name = await this.requireInput("Name (1-32 chars): ", val => val.length >= 1 && val.length <= 32);
 
-        // 3. Member Permissions
+        // 2. Permissions
         console.clear();
-        console.log("🔐 3/10 - Permissions");
-        console.log("📋 Valid permissions:\n",
-            Object.keys(PermissionFlagsBits).join(', '));
+        console.log("🔐 2/5 - Command Permissions");
+        await this.addPermissions(config);
 
-        const permsInput = await this.requireInput(
-            "Default member permissions (comma separated, or 'none'): ",
-            (val) => {
-                if (!val || val.toLowerCase() === "none" || val == '') return true;
+        // 3. DM
+        console.clear();
+        console.log("💬 3/5 - DM Permissions");
+        config.dm_permission = await this.yesNoInput("Authorize in DM ? (y/n): ");
 
-                const permissions = val.split(",").map(p => p.trim());
-                const invalidPerms = permissions.filter(perm => !(perm in PermissionFlagsBits));
-
-                if (invalidPerms.length > 0) {
-                    console.log(`❌ Invalid permissions: ${invalidPerms.join(', ')}`);
-                    console.log("📋 Valid permissions:\n",
-                        Object.keys(PermissionFlagsBits).join(', '));
-                    return false;
-                }
-
-                return true;
-            },
-            true
-        );
-
-        if (permsInput !== '' && permsInput.toLowerCase() !== "none") {
-            config.default_member_permissions = permsInput.split(",")
-                .map(p => p.trim()) as (keyof typeof PermissionFlagsBits)[];
+        // 4. Guild Specific
+        console.clear();
+        console.log("⚙️ 4/5 - Guild Specific");
+        if(await this.yesNoInput("Guild Specific ? (y/n): ")) {
+            config.guild_ids = await this.optionalGuildIds();
         }
 
-        // 4. DM Permission
+        // 5. Save
         console.clear();
-        console.log("💬 4/10 - DM Permission");
-        config.dm_permission = (await this.yesNoInput("Allow in DMs? (y/n): "));
-
-        // 5. Integration Types
-        console.clear();
-        console.log("🔗 5/10 - Integration Types");
-        console.log("0 => GUILD_INSTALL");
-        console.log("1 => USER_INSTALL");
-        console.log("(comma separated, or 'all')");
-        const intInput = await this.requireInput("Integration types: ");
-        if (intInput.toLowerCase() === "all") {
-            config.integration_types = [0, 1];
-        } else {
-            config.integration_types = intInput.split(",").map(i => parseInt(i.trim())).filter(i => !isNaN(i));
-        }
-
-        console.clear();
-        console.log("🌐 6/10 - Contexts");
-        console.log("0 => Can be used inside server");
-        console.log("1 => Can be used inside DMs with bot");
-        console.log("2 => Group DMs & other DMs");
-        console.log("(comma separated, or 'all')");
-        const ctxInput = await this.requireInput("Contexts: ");
-        if (ctxInput.toLowerCase() === "all") {
-            config.contexts = [0, 1, 2];
-        } else {
-            config.contexts = ctxInput.split(",").map(i => parseInt(i.trim())).filter(i => !isNaN(i));
-        }
-
-        // 7. Guild IDs
-        console.clear();
-        console.log("🏠 7/10 - Guild IDs (optional)");
-        console.log(" => Used to deploy specific context menu for specific guild");
-        const guildInput = await this.requireInput(
-            "Guild IDs (comma separated, or 'none'): ",
-            (val) => {
-                if (!val || val.toLowerCase() === "none") return true;
-
-                const ids = val.split(",").map(id => id.trim());
-                const invalidIds = ids.filter(id =>
-                    !DiscordRegex.GUILD_ID.test(id)
-                );
-
-                if (invalidIds.length > 0) {
-                    console.log(`❌ Invalid Guild IDs: ${invalidIds.join(', ')}`);
-                    console.log("ℹ️  Discord Guild ID = 18 chiffres (ex: 1111160769132896377)");
-                    return false;
-                }
-
-                console.log("✅ Valid Guild IDs:", ids.join(', '));
-                return true;
-            },
-            true
-        );
-
-        if (guildInput.toLowerCase() !== "none" && guildInput !== "") {
-            config.guildID = guildInput.split(",").map(id => id.trim());
-        }
-
-        // 8. Filename
-        console.clear();
-        console.log("💾 8/10 - File");
-        const filename = (await this.requireInput("Filename (ex: my-context-menu): ")) + ".json";
-
-        await this.saveFile(FolderName.CONTEXT_MENU, filename, config)
-        return this.showMainMenu();
+        console.log("💾 5/5 - Save");
+        const filename = `${config.name.toLowerCase().replace(/\s+/g, '-')}.json`;
+        await this.saveFile(FolderName.CONTEXT_MENU, filename, config);
     }
 }
