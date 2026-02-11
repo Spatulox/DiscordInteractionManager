@@ -25,7 +25,9 @@ A lightweight CLI tool to manage Discord bot interactions (slash commands, conte
 >   - [User Commands](https://docs.discord.com/developers/interactions/application-commands#user-commands)
 >   - [Message Commands](https://docs.discord.com/developers/interactions/application-commands#message-commands)
 
-### ⚠️ Discord "Activities" are not supported, even if it's a type of interaction, because it's a complete game feature.
+### ⚠️ Unsupported Interaction
+    -  Discord Component are not supported, because it's not a static thing register on Discord.
+    -  Discord "Activities" are not supported, because it's a complete game feature.
 
 ## Quick Start
 ```bash
