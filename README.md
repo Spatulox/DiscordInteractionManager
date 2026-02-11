@@ -8,9 +8,9 @@ A lightweight CLI tool to manage Discord bot interactions (slash commands, conte
 
     ⚙️ File Generation: Interactive JSON generators for slash commands & context menus
 
-    🔍 Guild Discovery: Auto-detect all guilds + command counts per guild
+    🔍 Guild Discovery: Auto-detect all guilds + interaction counts per guild
 
-    🎛️ Interactive CLI: Rich menus, input validation, command selection
+    🎛️ Interactive CLI: Rich menus, input validation, interaction selection
 
     📦 Only one runtime deps: Only discord.js is required in production
     
@@ -25,7 +25,7 @@ A lightweight CLI tool to manage Discord bot interactions (slash commands, conte
 >   - [User Commands](https://docs.discord.com/developers/interactions/application-commands#user-commands)
 >   - [Message Commands](https://docs.discord.com/developers/interactions/application-commands#message-commands)
 
-### ⚠️ Discord "Activities" are not supported, even if it's a type of interaction, since it's a complete game feature.
+### ⚠️ Discord "Activities" are not supported, even if it's a type of interaction, because it's a complete game feature.
 
 ## Quick Start
 ```bash
@@ -58,16 +58,38 @@ You will be greet by a CLI :
 Choose an option: 
 ```
 
-## How it works
-### Creating an interaction
-- You can generate slash commands and context menu with the cli
-- When generating files with the cli, you should be able to see generated files in the ./handlers*
+# How it works
+## Creating an interaction
+> - You can generate slash commands and context menu with the cli
 
-### Update an interaction
-- You can update any interaction, by updating the generated file inside the ./handlers folder*
-- If you want to update the default_member_permissions_string field with the keyof PermissionBitFields of discordjs (or let it empty for everyone), it will automatically update the default_member_permissions field
+> - When generating files with the cli, you should be able to see generated files in the "**./handlers**"*
 
+## Deploy an interaction
+> - Once you have deployed an interaction, you can update/delete it using the cli
 
+> - The scope** of the interaction is determined while generating the file
+
+## List interactions
+> - List global interaction 
+
+> - list interaction locked to a specific guild
+  
+> - Count the number of interaction by scope**
+
+## Update an interaction
+> - You can update any interaction, by updating the generated file inside the "**./handlers**" folder*
+
+> - Once you updated the generated file, you can use the cli to update the interaction
+
+> - If you want to change the scope** of an interaction you can delete/add the "**guild_ids**" field in the generated interaction files, just don't forget to delete the old one and deploy the new one. **Normal update will not work**
+
+> - If you want to update the permission of the interaction, you need to update the "**default_member_permissions_string**" field with the keyof **PermissionBitFields** of discordjs (or let it empty for everyone), it will automatically update the "**default_member_permissions**" field
+
+> - If the "**default_member_permissions_string**" field doesn't exist for some reason, you can create it or go to the [Discord Dev potal](https://discord.com/developers/applications/), in any of your app, go to the "Bot" tab and then check any of the "BotPermission" you want for the interaction and then copy the "Permission Integer" to paste it inside the "**default_member_permissions**" field inside the json of the interaction 
+
+## Delete an interation
+> - You can delete any interaction, in any scope**
 
 Key:
 * Folder at the root of your project, if not, make sure you didn't overwrite the path with the DISCORD_INTERACTION_FOLDER variable
+* ** Scope refer to "global" or "guild specific"
