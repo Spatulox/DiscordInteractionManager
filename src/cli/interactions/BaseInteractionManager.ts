@@ -1,9 +1,11 @@
 #!/usr/bin/env node
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v10';
+import {PermissionFlagsBits} from "discord.js";
 import * as fs from 'fs/promises';
-import {FileManager} from "../../../FileManager";
-import {Log} from "../../../../utils/Log";
+import {Log} from "../../utils/Log";
+import {Guild} from "../GuildListManager";
+import {FileManager} from "../../utils/FileManager";
 
 // Types
 export interface Command {
@@ -11,6 +13,7 @@ export interface Command {
     description: string;
     options?: any[];
     default_member_permissions?: string | bigint | number;
+    default_member_permissions_string?: string[];
     guildID?: string[];
     type: CommandType;
     id?: string;
@@ -24,7 +27,7 @@ export enum CommandType {
 }
 
 export abstract class BaseInteractionManager {
-    public abstract folderPath: string;
+    public abstract folderPath: string | undefined;
     public abstract commandType: number[];
 
     protected clientId: string;
@@ -81,40 +84,121 @@ export abstract class BaseInteractionManager {
         }
     }
 
-    async list(): Promise<Command[]> {
-        console.log(`Handlers ${this.folderPath} on Discord (global)...`);
+    private async fetchCommands(
+        endpoint:
+            | ReturnType<typeof Routes.applicationCommands>
+            | ReturnType<typeof Routes.applicationGuildCommands>,
+        scope: 'global' | string,
+        guildId?: string,
+        printResult: boolean = true,
+    ): Promise<Command[]> {
+        const scopeLabel = scope === 'global' ? 'global' : `guild ${scope}`;
+        console.log(`Handlers ${this.folderPath} on Discord (${scopeLabel})...`);
 
         try {
-            const globalCmds = await this.rest.get(
-                Routes.applicationCommands(this.clientId)
-            ) as any[];
-
-            const commands: Command[] = globalCmds.filter(cmd => this.commandType.includes(cmd.type));
+            const rawCmds = await this.rest.get(endpoint) as any[];
+            const commands = rawCmds.filter(cmd => this.commandType.includes(cmd.type));
 
             const commandList: Command[] = commands.map((cmd: any, index: number) => ({
                 index: index,
                 name: cmd.name,
                 type: cmd.type,
                 description: cmd.description || 'N/A',
-                id: cmd.id
+                default_member_permissions: cmd.default_member_permissions,
+                default_member_permissions_string: this.bitfieldToPermissions(cmd.default_member_permissions),
+                id: cmd.id,
+                ...(guildId && { guildID: [guildId] })
             }));
 
-            console.log(`✅ ${commands.length} ${this.folderPath}(s) found\n`);
+            if(printResult) {
+                console.log(`✅ ${commandList.length} ${this.folderPath}(s) found\n`);
 
-            console.table(
-                commands.map((cmd: any) => ({
-                    Nom: cmd.name,
-                    Type: cmd.type === CommandType.SLASH ? 'Slash' : cmd.type === CommandType.USER_CONTEXT_MENU ? 'User' : 'Message',
-                    Description: cmd.descriCommandTypeption,
-                    ID: cmd.id.slice(-8)
-                }))
-            );
+                console.table(
+                    commandList.map((cmd: Command) => ({
+                        Nom: cmd.name,
+                        Type: cmd.type === CommandType.SLASH ? 'Slash' :
+                            cmd.type === CommandType.USER_CONTEXT_MENU ? 'User Context Menu' : 'Message Context Menu',
+                        Description: cmd.description,
+                        Permissions: cmd.default_member_permissions_string?.join(", "),
+                        ID: cmd.id
+                    })));
+            }
+
             return commandList;
         } catch (error) {
-            Log.error(`❌ Erreur: ${(error as Error).message}`);
-            return []
+            const errorMsg = scope === 'global'
+                ? `❌ Error: ${(error as Error).message}`
+                : `❌ Guild error ${scope}: ${(error as Error).message}`;
+            Log.error(errorMsg);
+            return [];
         }
     }
+
+    async list(printResult: boolean = true): Promise<Command[]> {
+        return this.fetchCommands(
+            Routes.applicationCommands(this.clientId),
+            'global',
+            undefined,
+            printResult
+        );
+    }
+
+    async listGuild(guildID: string, printResult: boolean = true): Promise<Command[]> {
+        return this.fetchCommands(
+            Routes.applicationGuildCommands(this.clientId, guildID),
+            guildID,
+            guildID,
+            printResult
+        );
+    }
+
+    async listAllGuilds(guilds: Guild[]): Promise<{ guild: string; globalCommands: Command[], guildCommands: Command[] }[]> {
+        console.log("📡 Getting all guilds...\n");
+        console.log(`📋 ${guilds.length} guild(s) found\n`);
+
+        if (!guilds.length) return [];
+
+        const globalCommands = await this.list(false)
+
+        const guildCommandPromises = guilds.map(async (guild: Guild) => {
+            try {
+
+                let guildCommands = await this.listGuild(guild.id, false)
+
+                const allCommands = [...guildCommands, ...globalCommands]
+                return {
+                    guild: `${guild.name} (${guild.id})`,
+                    guildId: guild.id,
+                    globalCommands: globalCommands,
+                    guildCommands: guildCommands,
+                    count: allCommands.length
+                };
+            } catch (error) {
+                console.error(`⚠️ Guild ${guild.id}: ${(error as Error).message}`);
+                return {
+                    guild: `${guild.name} (${guild.id})`,
+                    guildId: guild.id,
+                    globalCommands: globalCommands,
+                    guildCommands: [],
+                    count: 0
+                };
+            }
+        });
+
+        const results = await Promise.all(guildCommandPromises);
+
+        console.log("\n📊 INTERACTION PER GUILD :\n");
+        console.table(results.map(r => ({
+            "Guild": r.guild,
+            [this.folderPath ? "Global " + (this.folderPath?.charAt(0).toUpperCase() + this.folderPath?.slice(1) ) : " Interactions"]: r.globalCommands.length,
+            [this.folderPath ? "Specific " + (this.folderPath?.charAt(0).toUpperCase() + this.folderPath?.slice(1) ) : " Interactions"]: r.guildCommands.length,
+            "Total": r.count
+        })));
+
+        return results.filter(r => r.count > 0);
+    }
+
+
 
     async deploy(commands: Command[]): Promise<void> {
         console.log(`Deploying ${commands.length} ${this.folderPath}(s)...`);
@@ -127,7 +211,7 @@ export abstract class BaseInteractionManager {
             }
 
             try {
-                await this.deploySingleCommand(cmd, file);
+                await this.deploySingleInteraction(cmd, file);
                 updatedCount++;
             } catch (error) {
                 Log.error(`Error ${file}: ${(error as Error).message}`);
@@ -178,10 +262,20 @@ export abstract class BaseInteractionManager {
         }
     }
 
-    private async deploySingleCommand(cmd: Command, file: string): Promise<void> {
+    private async deploySingleInteraction(cmd: Command, file: string): Promise<void> {
         const deployToGuilds = cmd.guildID?.length ? cmd.guildID! : [];
         const dataToSend = { ...cmd };
         delete dataToSend.guildID;
+
+        if (cmd.default_member_permissions_string && Array.isArray(cmd.default_member_permissions_string)) {
+            const bitfield = this.permissionsToBitfield(cmd.default_member_permissions_string);
+            if (bitfield !== undefined) {
+                dataToSend.default_member_permissions = bitfield;
+                cmd.default_member_permissions = bitfield;
+            } else {
+                delete dataToSend.default_member_permissions;
+            }
+        }
 
         if (cmd.type === CommandType.MESSAGE_CONTEXT_MENU || cmd.type === CommandType.USER_CONTEXT_MENU) {
             delete dataToSend.options;
@@ -202,7 +296,7 @@ export abstract class BaseInteractionManager {
                         await this.rest.patch(Routes.applicationGuildCommand(this.clientId, guildId, found.id), { body: dataToSend });
                     }
                 } catch (error) {
-                    console.error(`⚠️  Guild ${guildId.slice(-4)}: ${(error as Error).message}`);
+                    console.error(`⚠️  Guild ${guildId}: ${(error as Error).message}`);
                 }
             }
         } else {
@@ -258,5 +352,37 @@ export abstract class BaseInteractionManager {
             }
         }
     }
+
+    private permissionsToBitfield(perms: string[] | undefined): string | undefined {
+        if (!perms || perms.length === 0) return undefined;
+
+        let bits = 0n;
+        for (const name of perms) {
+            const value = (PermissionFlagsBits as Record<string, bigint>)[name];
+            if (!value) {
+                console.warn(`Unknow permission in default_member_permissions: ${name}`);
+                continue;
+            }
+            bits |= value;
+        }
+
+        return bits.toString();
+    }
+
+    private bitfieldToPermissions(bitfield: string | number | bigint | undefined): string[] {
+        if (!bitfield) return [];
+
+        const bits = BigInt(bitfield);
+        const result: string[] = [];
+
+        for (const [name, value] of Object.entries(PermissionFlagsBits)) {
+            if ((bits & value) === value) {
+                result.push(name);
+            }
+        }
+
+        return result;
+    }
+
 
 }

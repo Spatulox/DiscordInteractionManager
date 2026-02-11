@@ -104,7 +104,7 @@ export class ContextMenuGeneratorCLI extends BaseCLI {
 
                 const ids = val.split(",").map(id => id.trim());
                 const invalidIds = ids.filter(id =>
-                    !DiscordRegex.DISCORD_ID.test(id)
+                    !DiscordRegex.GUILD_ID.test(id)
                 );
 
                 if (invalidIds.length > 0) {
@@ -128,38 +128,7 @@ export class ContextMenuGeneratorCLI extends BaseCLI {
         console.log("💾 8/10 - File");
         const filename = (await this.requireInput("Filename (ex: my-context-menu): ")) + ".json";
 
-        await this.saveFile(`./handlers/${FolderName.CONTEXT_MENU}`, filename, config)
+        await this.saveFile(FolderName.CONTEXT_MENU, filename, config)
         return this.showMainMenu();
-
-        /*
-
-        // 9. Validating file
-        console.clear();
-        console.log("✨ Final JSON preview:");
-        console.log(JSON.stringify(config, null, 2));
-
-        const confirm = (await this.yesNoInput("\nSave this file? (y/n): "));
-        if (!confirm) {
-            console.log("Cancelled");
-            await this.prompt("Press Enter...");
-            return this.showMainMenu();
-        }
-
-        // 10. Write File
-        try {
-            let filenameTmp = filename
-            if(await FileManager.readJsonFile(`./handlers/${FolderName.CONTEXT_MENU}/${filenameTmp}`)){
-                if(!await this.yesNoInput(`./handlers/${FolderName.CONTEXT_MENU}/${filenameTmp}) already exist, do you want to overwrite it ? (y/n)`)){
-                    filenameTmp = filename + (Date.now());
-                }
-            }
-            await FileManager.writeJsonFile(`./handlers/${FolderName.CONTEXT_MENU}`, filenameTmp, config, false);
-            console.log(`File saved: ./handlers/${FolderName.CONTEXT_MENU}/${filenameTmp}`);
-        } catch (error) {
-            console.error("Error saving file:", error);
-        }
-
-        await this.prompt("Press Enter to continue...");
-        return this.showMainMenu();*/
     }
 }

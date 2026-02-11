@@ -1,27 +1,30 @@
 import {BaseCLI, MenuSelectionCLI} from "../BaseCLI";
-import { BaseInteractionManager, Command } from "../../manager/handlers/builder/interactions/BaseInteractionManager";
+import { BaseInteractionManager, Command } from "../interactions/BaseInteractionManager";
+import {Guild, GuildListManager} from "../GuildListManager";
+import {Env} from "../../Env";
 
 export class InteractionManagerCLI extends BaseCLI {
 
+    protected menuSelection: MenuSelectionCLI;
     protected readonly manager: BaseInteractionManager;
     protected readonly managerKey: string;
 
     protected getTitle(): string {
         return `${this.managerKey} - ${this.manager.folderPath}`;
     }
-
-    protected readonly menuSelection: MenuSelectionCLI = [
-        { label: "List remote", action: () => this.listRemote() },
-        { label: "Deploy local", action: () => this.handleDeploy() },
-        { label: "Update remote", action: () => this.handleUpdate() },
-        { label: "Delete remote", action: () => this.handleDelete() },
-        { label: 'Back', action: () => this.goBack() },
-    ];
-
     constructor(parent: BaseCLI, manager: BaseInteractionManager, managerKey: string) {
         super(parent);
         this.manager = manager;
         this.managerKey = managerKey;
+        this.menuSelection = [
+            { label: `List Global ${this.manager.folderPath}`, action: () => this.listRemote() },
+            { label: `List Specific ${this.manager.folderPath} for a Guild`, action: async () => this.guildListRemote(await new GuildListManager(Env.clientId, Env.token).chooseGuild()) },
+            { label: `Count ${this.manager.folderPath} per Guilds`, action: async () => this.guildListAllRemote() },
+            { label: "Deploy local", action: () => this.handleDeploy() },
+            { label: "Update remote", action: () => this.handleUpdate() },
+            { label: "Delete remote", action: () => this.handleDelete() },
+            { label: 'Back', action: () => this.goBack() },
+        ];
     }
 
     protected execute(): Promise<void> {
@@ -30,6 +33,17 @@ export class InteractionManagerCLI extends BaseCLI {
 
     private async listRemote(): Promise<void> {
         await this.manager.list();
+    }
+
+    private async guildListRemote(guild: Guild | null): Promise<void> {
+        if(!guild) {
+            return
+        }
+        await this.manager.listGuild(guild.id)
+    }
+
+    private async guildListAllRemote(): Promise<void> {
+        await this.manager.listAllGuilds(await new GuildListManager(Env.clientId, Env.token).list(false))
     }
 
     private async handleDeploy(): Promise<void> {

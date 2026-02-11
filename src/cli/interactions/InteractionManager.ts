@@ -1,5 +1,5 @@
 import {BaseInteractionManager, CommandType} from "./BaseInteractionManager";
-import {FolderName} from "../../../../type/FolderName";
+import {FolderName} from "../../type/FolderName";
 
 export class CommandManager extends BaseInteractionManager {
     public commandType: number[] = [CommandType.SLASH];
@@ -9,4 +9,9 @@ export class CommandManager extends BaseInteractionManager {
 export class ContextMenuManager extends BaseInteractionManager {
     public commandType: number[] = [CommandType.USER_CONTEXT_MENU, CommandType.MESSAGE_CONTEXT_MENU];
     public folderPath = FolderName.CONTEXT_MENU;
+}
+
+export class AllInteractionManager extends BaseInteractionManager {
+    public commandType: number[] = [CommandType.SLASH, CommandType.USER_CONTEXT_MENU, CommandType.MESSAGE_CONTEXT_MENU];
+    public folderPath = undefined;
 }

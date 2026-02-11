@@ -22,6 +22,7 @@ export class SlashCommandGeneratorCLI extends BaseCLI {
             options: [],
             dm_permission: false,
             default_member_permissions: undefined,
+            default_member_permissions_string: undefined,
             integration_types: [0, 1],
             contexts: [0]
         };
@@ -59,7 +60,7 @@ export class SlashCommandGeneratorCLI extends BaseCLI {
         );
 
         if (permsInput && permsInput.toLowerCase() !== "none") {
-            config.default_member_permissions = permsInput.split(",").map(p => p.trim()) as (keyof typeof PermissionFlagsBits)[];
+            config.default_member_permissions_string = permsInput.split(",").map(p => p.trim()) as (keyof typeof PermissionFlagsBits)[];
         }
 
         // 4. DM Permission
@@ -112,7 +113,7 @@ export class SlashCommandGeneratorCLI extends BaseCLI {
             (val) => {
                 if (!val || val.toLowerCase() === "none") return true;
                 const ids = val.split(",").map(id => id.trim());
-                const invalidIds = ids.filter(id => !DiscordRegex.DISCORD_ID.test(id));
+                const invalidIds = ids.filter(id => !DiscordRegex.GUILD_ID.test(id));
                 if (invalidIds.length > 0) {
                     console.log(`❌ Invalid Guild IDs: ${invalidIds.join(', ')}`);
                     return false;
@@ -131,7 +132,7 @@ export class SlashCommandGeneratorCLI extends BaseCLI {
         console.log("💾 9/12 - Filename");
         const filename = (await this.requireInput("Filename (without .json): ")) + ".json";
 
-        await this.saveFile(`./handlers/${FolderName.SLASH_COMMANDS}`, filename, config);
+        await this.saveFile(FolderName.SLASH_COMMANDS, filename, config);
     }
 
     private async addCommandStructure(config: any): Promise<void> {

@@ -1,6 +1,8 @@
+#!/usr/bin/env node
 import {BaseCLI, MenuSelectionCLI} from "./BaseCLI";
 import {InteractionCLI} from "./InteractionCLI/InteractionCLI";
 import {GenerationCLI} from "./GenerationCLI/GenerationCLI";
+import {Env} from "../Env";
 
 /**
  * --- MainCLI ---
@@ -14,6 +16,10 @@ export class MainCLI extends BaseCLI {
 
     constructor() {
         super();
+        const {clientId, token} = Env
+        if(!clientId || !token){
+            throw new Error("Missing clientId or token");
+        }
         this.showMainMenu();
     }
 
@@ -25,7 +31,7 @@ export class MainCLI extends BaseCLI {
     ];
 
     protected execute(): Promise<void> {
-        console.log("👋 Bye !")
+        console.log("👋  Bye !")
         process.exit()
     }
 }
