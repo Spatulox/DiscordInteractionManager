@@ -34,6 +34,7 @@ export class SlashCommandGeneratorCLI extends InteractionGeneratorCLI {
             "Description (1-100 chars): ",
             val => val.length >= 1 && val.length <= 100
         );
+        await this.nsfw(config)
 
         console.clear();
         console.log("🔐 2/6 - Command Permissions");

@@ -115,7 +115,7 @@ export abstract class BaseCLI {
         console.log('🤖 What it does:');
         console.log('  • Manage your Discord interactions (slash commands & context menus) via an interactive CLI');
         console.log('  • Let you deploy/update/delete any interaction');
-        console.log('  • Let you generate an interaction files');
+        console.log('  • Let you generate interactions files');
 
         console.log('');
         console.log('How you need to save your interaction files');

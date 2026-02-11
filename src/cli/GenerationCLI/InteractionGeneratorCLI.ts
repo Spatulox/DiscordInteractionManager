@@ -10,6 +10,12 @@ export abstract class InteractionGeneratorCLI extends BaseCLI {
 
     protected abstract execute(): Promise<void>;
 
+    protected async nsfw(config: SlashCommandConfig | ContextMenuConfig): Promise<void> {
+        if(await this.yesNoInput("NSFW ? (y/n)")){
+            config.nsfw = true
+        }
+    }
+
     protected async addPermissions(config: SlashCommandConfig | ContextMenuConfig): Promise<void> {
         console.clear();
 
@@ -34,7 +40,7 @@ export abstract class InteractionGeneratorCLI extends BaseCLI {
         );
 
         if (!input.trim() || input.toLowerCase() === 'everyone') {
-            config.default_member_permissions_string = ['everyone'];
+            config.default_member_permissions_string = [''];
             config.default_member_permissions = 0n.toString();
             return;
         }

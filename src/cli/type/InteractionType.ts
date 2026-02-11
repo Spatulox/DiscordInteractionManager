@@ -66,26 +66,26 @@ export interface CommandOption {
     autocomplete?: boolean;
 }
 
-export interface SlashCommandConfig {
+interface InteractionConfig {
     name: string;
-    description: string;
-    type: 1;
-    options?: CommandOption[];
+    type: number;
     default_member_permissions?: string;
     default_member_permissions_string?: PermissionString[];
     dm_permission: boolean;
     integration_types?: InteractionIntegrationType[];
     contexts?: InteractionContextType[];
+    nsfw?: boolean;
     guild_ids?: string[];
 }
 
-export interface ContextMenuConfig {
+export interface SlashCommandConfig extends InteractionConfig{
+    name: string;
+    description: string;
+    type: 1;
+    options?: CommandOption[];
+}
+
+export interface ContextMenuConfig extends InteractionConfig {
     name: string;
     type: 2 | 3;
-    default_member_permissions?: string[];
-    default_member_permissions_string?: PermissionString[];
-    dm_permission: boolean;
-    integration_types?: InteractionIntegrationType[];
-    contexts?: InteractionContextType[];
-    guild_ids?: string[];
 }
