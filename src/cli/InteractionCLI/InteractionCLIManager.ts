@@ -53,7 +53,7 @@ export class InteractionManagerCLI extends BaseCLI {
     }
 
     private async handleUpdate(): Promise<void> {
-
+        let guild
         const rep = await this.yesNoInput("Do you want to update a global command or a specific guild command (y=global/n=specific): ")
 
         console.log('═'.repeat(80));
@@ -61,11 +61,12 @@ export class InteractionManagerCLI extends BaseCLI {
         if(rep){
             await this.listRemote()
         } else {
-            await this.guildListRemote(await new GuildListManager(Env.clientId, Env.token).chooseGuild());
+            guild = await new GuildListManager(Env.clientId, Env.token).chooseGuild()
+            await this.guildListRemote(guild);
         }
         console.log('═'.repeat(80));
         console.log(`ACTUAL LOCAL ${this.manager.folderPath?.toUpperCase()}`)
-        const selected = await this.selectCommands(this.manager, await this.manager.listFromFile(false));
+        const selected = await this.selectCommands(this.manager, await this.manager.listFromFile(false, guild?.id));
         if (selected.length === 0) return;
         await this.manager.update(selected);
     }
@@ -78,7 +79,7 @@ export class InteractionManagerCLI extends BaseCLI {
         if(rep){
             commands = await this.manager.list()
         } else {
-            const guild = await new GuildListManager(Env.clientId, Env.token).chooseGuild()
+            let guild = await new GuildListManager(Env.clientId, Env.token).chooseGuild()
             if(!guild){
                 console.log("Error, cannot find guild")
                 return

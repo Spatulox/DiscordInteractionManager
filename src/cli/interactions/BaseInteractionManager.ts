@@ -53,8 +53,9 @@ export abstract class BaseInteractionManager {
             })));
     }
 
-    async listFromFile(avoidDeployedInteraction: boolean = true): Promise<Command[]> {
-        console.log(`Listing Local Handlers (${this.folderPath})${avoidDeployedInteraction ? " not":""} deployed on discord`);
+    async listFromFile(avoidDeployedInteraction: boolean = true, guildID?: string): Promise<Command[]> {
+        let scopeMessage = guildID ? `(guild ${guildID})` : (global)
+        console.log(`Listing Local Handlers (${this.folderPath})${avoidDeployedInteraction ? " not":""} deployed on Discord ${scopeMessage}`);
 
         try {
             const files = await FileManager.listJsonFiles(`${Env.interactionFolderPath}/${this.folderPath}`);
@@ -68,6 +69,7 @@ export abstract class BaseInteractionManager {
             for (const [_index, file] of files.entries()) {
                 const cmd = await this.readInteraction(`${Env.interactionFolderPath}/${this.folderPath}/${file}`);
                 if (!cmd || (cmd.id && avoidDeployedInteraction)) continue;
+                if(guildID && !cmd.guildID?.includes(guildID)) continue
 
                 const commandWithIndex = {
                     ...cmd,
@@ -97,7 +99,7 @@ export abstract class BaseInteractionManager {
         printResult: boolean = true,
     ): Promise<Command[]> {
         const scopeLabel = scope === 'global' ? 'global' : `guild ${scope}`;
-        console.log(`Listing Deployed Handlers ${this.folderPath} on Discord (${scopeLabel})...`);
+        console.log(`Listing Deployed Handlers ${this.folderPath} on Discord (${scopeLabel})`);
 
         try {
             const rawCmds = await this.rest.get(endpoint) as any[];
