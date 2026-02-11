@@ -12,14 +12,19 @@
   "dependencies": {
     "discord.js": "^14.18.0",
     "dotenv": "^17.2.0",
-    "fs": "^0.0.1-security",
-    "typescript": "^5.8.3"
+    "fs": "^0.0.1-security"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
     "@types/node-schedule": "^2.1.7",
     "nodemon": "^3.1.9",
-    "tsx": "^4.20.3"
+    "tsx": "^4.20.3",
+    "typescript": "^5.9.3"
   },
-  "keywords": ["discord", "discord bot", "framework", "bot"]
+  "keywords": [
+    "discord",
+    "discord bot",
+    "framework",
+    "bot"
+  ]
 }
