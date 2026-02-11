@@ -119,7 +119,7 @@ export abstract class BaseCLI {
         console.log('  • Let you generate interactions files');
 
         console.log('');
-        console.log('How you need to save your interaction files');
+        console.log('How generated interaction files are stored');
         console.log('📁 Folder Structure:');
         console.log(`  ├── ${Env.interactionFolderPath}/`);
         console.log('  │   ├── commands/     ← Slash Commands (type 1)');
