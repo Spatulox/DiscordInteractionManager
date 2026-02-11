@@ -6,6 +6,13 @@
   "bin": {
     "dim": "dist/cli/MainCLI.js"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Spatulox/DiscordInteractionManager.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Spatulox/DiscordInteractionManager/issues"
+  },
   "scripts": {
     "build": "tsc",
     "cli": "node dist/cli/MainCLI.js"
