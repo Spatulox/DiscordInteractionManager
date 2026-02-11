@@ -56,7 +56,7 @@ export abstract class InteractionGeneratorCLI extends BaseCLI {
         }
 
         config.default_member_permissions_string = selectedPermNames;
-        config.default_member_permissions = this.permissionsToBitfield(input.split(","));
+        config.default_member_permissions = this.permissionsToBitfield(selectedPermNames);
     }
 
 
