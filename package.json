@@ -1,22 +1,23 @@
 {
-  "name": "simplediscordbot",
+  "name": "@spatulox/discord-interaction-manager",
   "version": "1.0.0",
   "author": "Spatulox",
-  "description": "Simple discord bot framework to set up a bot under 30 secondes",
-  "main": "./dist/index.js",
+  "description": "discord-interaction-manager is a lightweight CLI tool to manage Discord bot interactions (slash commands, context menus) in under 30 seconds. Deploy, update, delete, and generate interaction files with an interactive terminal interface.",
+  "bin": {
+    "dim": "dist/cli/MainCLI.js"
+  },
   "scripts": {
     "build": "tsc",
     "cli": "node dist/cli/MainCLI.js"
   },
-  "license": "ISC",
+  "license": "Apache-2.0",
   "dependencies": {
-    "discord.js": "^14.18.0",
-    "dotenv": "^17.2.0",
-    "fs": "^0.0.1-security"
+    "discord.js": "^14.18.0"
   },
   "devDependencies": {
     "@types/node": "^22.14.0",
     "@types/node-schedule": "^2.1.7",
+    "dotenv": "^17.2.4",
     "nodemon": "^3.1.9",
     "tsx": "^4.20.3",
     "typescript": "^5.9.3"
