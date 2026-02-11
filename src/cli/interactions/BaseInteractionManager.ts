@@ -68,7 +68,6 @@ export abstract class BaseInteractionManager {
 
             console.table(
                 commandList.map((cmd: any) => ({
-                    '#': cmd.index,
                     Nom: cmd.name,
                     Type: cmd.type === CommandType.SLASH ? 'Slash' :
                         cmd.type === CommandType.USER_CONTEXT_MENU ? 'User' : 'Message',
@@ -187,11 +186,13 @@ export abstract class BaseInteractionManager {
 
         const results = await Promise.all(guildCommandPromises);
 
-        console.log("\n📊 INTERACTION PER GUILD :\n");
+        const interactionTypeTitle = this.folderPath ? (this.folderPath?.toUpperCase() ) : "INTERACTION"
+        const interactionTypeDesc = this.folderPath ? (this.folderPath?.charAt(0).toUpperCase() + this.folderPath?.slice(1) ) : " Interactions"
+        console.log(`📊 ${interactionTypeTitle} PER GUILD :`);
         console.table(results.map(r => ({
             "Guild": r.guild,
-            [this.folderPath ? "Global " + (this.folderPath?.charAt(0).toUpperCase() + this.folderPath?.slice(1) ) : " Interactions"]: r.globalCommands.length,
-            [this.folderPath ? "Specific " + (this.folderPath?.charAt(0).toUpperCase() + this.folderPath?.slice(1) ) : " Interactions"]: r.guildCommands.length,
+            ["Global " + interactionTypeDesc]: r.globalCommands.length,
+            ["Specific " + interactionTypeDesc]: r.guildCommands.length,
             "Total": r.count
         })));
 
