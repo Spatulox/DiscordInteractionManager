@@ -1,9 +1,10 @@
 import {BaseCLI, MenuSelectionCLI} from "../BaseCLI";
 import { BaseInteractionManager, Command } from "../interactions/BaseInteractionManager";
-import {Guild, GuildListManager} from "../GuildListManager";
+import {GuildListManager} from "../GuildListManager";
 import {Env} from "../../Env";
+import {InteractionListManagerCLI} from "./InteractionListManagerCLI";
 
-export class InteractionManagerCLI extends BaseCLI {
+export class InteractionManagerCLI extends InteractionListManagerCLI {
 
     protected menuSelection: MenuSelectionCLI;
     protected readonly manager: BaseInteractionManager;
@@ -13,13 +14,11 @@ export class InteractionManagerCLI extends BaseCLI {
         return `${this.managerKey} - ${this.manager.folderPath}`;
     }
     constructor(parent: BaseCLI, manager: BaseInteractionManager, managerKey: string) {
-        super(parent);
+        super(parent, manager, managerKey);
         this.manager = manager;
         this.managerKey = managerKey;
         this.menuSelection = [
-            { label: `List Global ${this.manager.folderPath}`, action: () => this.listRemote() },
-            { label: `List Specific ${this.manager.folderPath} for a Guild`, action: async () => this.guildListRemote(await new GuildListManager(Env.clientId, Env.token).chooseGuild()) },
-            { label: `Count ${this.manager.folderPath} per Guilds`, action: async () => this.guildListAllRemote() },
+            { label: `List ${this.manager.folderPath}`, action: () => new InteractionListManagerCLI(this, manager, this.managerKey) },
             { label: "Deploy local", action: () => this.handleDeploy() },
             { label: "Update remote", action: () => this.handleUpdate() },
             { label: "Delete remote", action: () => this.handleDelete() },
@@ -29,21 +28,6 @@ export class InteractionManagerCLI extends BaseCLI {
 
     protected execute(): Promise<void> {
         throw new Error("Method not implemented.");
-    }
-
-    private async listRemote(): Promise<void> {
-        await this.manager.list();
-    }
-
-    private async guildListRemote(guild: Guild | null): Promise<void> {
-        if(!guild) {
-            return
-        }
-        await this.manager.listGuild(guild.id)
-    }
-
-    private async guildListAllRemote(): Promise<void> {
-        await this.manager.listAllGuilds(await new GuildListManager(Env.clientId, Env.token).list(false))
     }
 
     private async handleDeploy(): Promise<void> {
