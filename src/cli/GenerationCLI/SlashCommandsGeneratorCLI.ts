@@ -73,12 +73,16 @@ export class SlashCommandGeneratorCLI extends InteractionGeneratorCLI {
                     .join(', ')
             );
 
+            const numericValues = Object.values(DiscordOptionType).filter((v): v is DiscordOptionType => typeof v === 'number');
+            const maxType = Math.max(...numericValues);
+            const minType = Math.min(...numericValues);
+
 
             const type = parseInt(await this.requireInput(
-                "Type (1-11): ",
+                `Type (${minType}-${maxType}): `,
                 val => {
                     const n = parseInt(val);
-                    return n >= 1 && n <= 11;
+                    return n >= minType && n <= maxType;
                 }
             )) as DiscordOptionType;
 
@@ -139,7 +143,7 @@ export class SlashCommandGeneratorCLI extends InteractionGeneratorCLI {
     }
 
     private async addChoices(): Promise<Choice[] | undefined> {
-        if (!await this.yesNoInput("Add Choices ? ")) return undefined;
+        if (!await this.yesNoInput("Add Choices (25 max) ? ")) return undefined;
 
         const choices: Choice[] = [];
         while (choices.length < 25) {
@@ -148,6 +152,9 @@ export class SlashCommandGeneratorCLI extends InteractionGeneratorCLI {
             choices.push({ name, value });
 
             if (!await this.yesNoInput("Another choice ? ")) break;
+        }
+        if(choices.length >= 25){
+            console.log("You can't have 25+ choices")
         }
         return choices;
     }
