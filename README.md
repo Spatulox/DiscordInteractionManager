@@ -75,18 +75,18 @@ Choose an option:
 ## List interactions
 > - List global interaction 
 
-> - list interaction locked to a specific guild
+> - List interaction locked to a specific guild
   
 > - Count the number of interaction by scope**
 
 ## Update an interaction
 > - You can update any interaction, by updating the generated file inside the "**./handlers**" folder*
 
-> - Once you updated the generated file, you can use the cli to update the interaction
+> - Once you updated the generated file, you can use the cli to update the interaction on Discord
 
 > - If you want to change the scope** of an interaction you can delete/add the "**guild_ids**" field in the generated interaction files, just don't forget to delete the old one and deploy the new one. **Normal update will not work**
 
-> - If you want to update the permission of the interaction, you need to update the "**default_member_permissions_string**" field with the keyof **PermissionBitFields** of discordjs (or let it empty for everyone), it will automatically update the "**default_member_permissions**" field
+> - If you want to update the permission of the interaction, you need to update the "**default_member_permissions_string**" field with the keyof **PermissionBitFields** of discordjs (or let it empty for everyone), it will automatically update the "**default_member_permissions**" field required by Discord
 
 > - If the "**default_member_permissions_string**" field doesn't exist for some reason, you can create it or go to the [Discord Dev potal](https://discord.com/developers/applications/), in any of your app, go to the "Bot" tab and then check any of the "BotPermission" you want for the interaction and then copy the "Permission Integer" to paste it inside the "**default_member_permissions**" field inside the json of the interaction 
 
@@ -94,5 +94,5 @@ Choose an option:
 > - You can delete any interaction, in any scope**
 
 Key:
-* Folder at the root of your project, if not, make sure you didn't overwrite the path with the DISCORD_INTERACTION_FOLDER variable
-* ** Scope refer to "global" or "guild specific"
+* *Folder at the root of your project, if not, make sure you didn't overwrite the path with the DISCORD_INTERACTION_FOLDER variable
+* **Scope refer to "global" or "guild specific"
