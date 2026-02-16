@@ -49,7 +49,8 @@ export abstract class BaseInteractionManager {
                     cmd.type === CommandType.USER_CONTEXT_MENU ? 'User Context Menu' : 'Message Context Menu',
                 Description: cmd.description,
                 Permissions: cmd.default_member_permissions_string?.join(", "),
-                ID: cmd.id
+                ID: cmd.id,
+                GuildID: cmd?.guildID,
             })));
     }
 
@@ -68,6 +69,9 @@ export abstract class BaseInteractionManager {
             const commandList: Command[] = [];
 
             for (const [_index, file] of files.entries()) {
+                if(file.includes("example")){
+                    continue;
+                }
                 const cmd = await this.readInteraction(PathUtils.createPathFile(this.folderPath, file));
                 if (!cmd || (cmd.id && avoidDeployedInteraction)) continue;
                 if(guildID && !cmd.guildID?.includes(guildID)) continue
