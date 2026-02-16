@@ -84,12 +84,14 @@ export class InteractionManagerCLI extends InteractionListManagerCLI {
             return [];
         }
 
-        const input = await this.prompt('Enter numbers (ex: 1,3,5 or "all" or "exit"): ');
+        const input = await this.prompt('Enter numbers (sperated by a comma, or "all" or "exit"): ');
         if (input.toLowerCase() === 'all') return commands;
         if (input.toLowerCase() === 'exit') return [];
 
         const indices = input.split(',').map(i => parseInt(i.trim())).filter(i => !isNaN(i));
-        const selected = commands.filter((cmd: any) => indices.includes(cmd.index));
+        const selected = indices
+            .map(i => commands[i])
+            .filter((cmd): cmd is Command => cmd !== undefined);
 
         if (selected.length === 0) {
             console.log('Invalid number');
