@@ -17,7 +17,7 @@
     "build": "rm -rf dist/ && tsup",
     "patch": "npm run build && npm version patch",
     "pub": "npm run patch && npm publish --access public",
-    "cli": "node dist/cli/MainCLI.js"
+    "cli": "node dist/MainCLI.js"
   },
   "license": "Apache-2.0",
   "dependencies": {
