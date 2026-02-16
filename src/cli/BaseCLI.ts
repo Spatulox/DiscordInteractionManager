@@ -2,6 +2,7 @@
 import readline from "readline";
 import {FileManager} from "../utils/FileManager";
 import {Env} from "../Env";
+import {PathUtils} from "../utils/PathUtils";
 
 export type MenuSelectionCLI = {
     label: string; // The Label for the Menu Choice
@@ -164,7 +165,7 @@ export abstract class BaseCLI {
         data: T,
     ): Promise<void> {
         let finalFilename = filename;
-        if(await FileManager.readJsonFile(`${Env.interactionFolderPath}/${folderName}/${filename.split(".json")[0] + ".json"}`)){
+        if(await FileManager.readJsonFile(PathUtils.createPathFile(folderName, filename.split(".json")[0] + ".json"))){
             if (!await this.yesNoInput(`"${finalFilename}" already exists. Overwrite? (y/n): `)) {
                 const timestamp = Date.now();
                 finalFilename = `${filename.replace('.json', '')}-${timestamp}`;
@@ -184,8 +185,8 @@ export abstract class BaseCLI {
         }
 
         try {
-            await FileManager.writeJsonFile(`${Env.interactionFolderPath}/${folderName}`, finalFilename, data);
-            console.log(`File saved: ${Env.interactionFolderPath}/${folderName}/${finalFilename}`);
+            await FileManager.writeJsonFile(PathUtils.createPathFolder(folderName), finalFilename, data);
+            console.log(`File saved: ${PathUtils.createPathFile(folderName, finalFilename)}`);
         } catch (error) {
             console.error("Error saving file:", error);
         }

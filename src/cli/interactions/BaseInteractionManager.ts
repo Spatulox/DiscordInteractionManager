@@ -6,7 +6,7 @@ import * as fs from 'fs/promises';
 import {Log} from "../../utils/Log";
 import {Guild} from "../GuildListManager";
 import {FileManager} from "../../utils/FileManager";
-import {Env} from "../../Env";
+import {PathUtils} from "../../utils/PathUtils";
 
 // Types
 export interface Command {
@@ -28,7 +28,7 @@ export enum CommandType {
 }
 
 export abstract class BaseInteractionManager {
-    public abstract folderPath: string | undefined;
+    public abstract folderPath: string;
     public abstract commandType: number[];
 
     protected clientId: string;
@@ -58,7 +58,8 @@ export abstract class BaseInteractionManager {
         console.log(`Listing Local Handlers (${this.folderPath})${avoidDeployedInteraction ? " not":""} deployed on Discord ${scopeMessage}`);
 
         try {
-            const files = await FileManager.listJsonFiles(`${Env.interactionFolderPath}/${this.folderPath}`);
+            
+            const files = await FileManager.listJsonFiles(PathUtils.createPathFolder(this.folderPath));
             if (!files || files.length === 0) {
                 console.log('No files found');
                 return [];
@@ -67,7 +68,7 @@ export abstract class BaseInteractionManager {
             const commandList: Command[] = [];
 
             for (const [_index, file] of files.entries()) {
-                const cmd = await this.readInteraction(`${Env.interactionFolderPath}/${this.folderPath}/${file}`);
+                const cmd = await this.readInteraction(PathUtils.createPathFile(this.folderPath, file));
                 if (!cmd || (cmd.id && avoidDeployedInteraction)) continue;
                 if(guildID && !cmd.guildID?.includes(guildID)) continue
 
@@ -333,20 +334,20 @@ export abstract class BaseInteractionManager {
 
     private async saveInteraction(fileName: string, cmd: Command): Promise<void> {
         delete cmd.filename
-        const filePath = `${Env.interactionFolderPath}/${this.folderPath}/${fileName}`;
+        const filePath = PathUtils.createPathFile(this.folderPath, fileName);
         await fs.writeFile(filePath, JSON.stringify(cmd, null, 2));
     }
 
     private async removeLocalIdFromFile(idListToDelete: string[]): Promise<void> {
 
-        const files = await FileManager.listJsonFiles(`${Env.interactionFolderPath}/${this.folderPath}`);
+        const files = await FileManager.listJsonFiles(PathUtils.createPathFolder(this.folderPath));
         if (!files || files.length === 0) {
             console.log('No local files to clean');
             return
         }
 
         for (const file of files) {
-            const filePath = `${Env.interactionFolderPath}/${this.folderPath}/${file}`;
+            const filePath = PathUtils.createPathFile(this.folderPath, file);
             const localCmd = await this.readInteraction(filePath);
 
             if (localCmd && localCmd.id && idListToDelete.includes(localCmd.id)) {

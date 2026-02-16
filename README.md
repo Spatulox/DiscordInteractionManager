@@ -41,6 +41,13 @@ You can use dotenv or set them by hand
 DISCORD_BOT_TOKEN="" // Discord Bot Token
 DISCORD_BOT_CLIENTID="" // The clientID of your bot
 DISCORD_INTERACTION_FOLDER="" // Optionnal, redirect where the generated interactions files are stored
+DISCORD_BOT_DEV (optional)
+ * Set to `true` to enable **development mode**. This switches:
+ * - Command files: `./handlers/commands/` → `./handlers/commands_dev/`
+ * - Context Menu files: `./handlers/context_menu/` → `./handlers/context_menu_dev/`
+ * Use the dev ENV to use dev interaction and change them as you like before setting them in you prod env
+ * Avoid overwriting you interaction IDS on your prod interactions, IDS are used to update the interaction, if you overwrite them, it will be a new interaction
+
 ```
 
 ## Run the tool
