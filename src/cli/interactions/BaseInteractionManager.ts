@@ -50,7 +50,7 @@ export abstract class BaseInteractionManager {
                 Description: cmd.description,
                 Permissions: cmd.default_member_permissions_string?.join(", "),
                 ID: cmd.id,
-                GuildID: cmd?.guildID,
+                GuildID: cmd?.guildID ?? "Global",
             })));
     }
 
