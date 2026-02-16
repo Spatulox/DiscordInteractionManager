@@ -1,7 +1,7 @@
 import {BaseCLI, MenuSelectionCLI} from "../BaseCLI";
 import {PermissionFlagsBits} from "discord.js";
 import {DiscordRegex} from "../../utils/DiscordRegex";
-import {ContextMenuConfig, SlashCommandConfig} from "../type/InteractionType";
+import {ContextMenuConfig, InteractionContextType, SlashCommandConfig} from "../type/InteractionType";
 
 export abstract class InteractionGeneratorCLI extends BaseCLI {
     protected abstract getTitle(): string
@@ -66,6 +66,49 @@ export abstract class InteractionGeneratorCLI extends BaseCLI {
             ? input.split(',').map(id => id.trim()).filter(DiscordRegex.GUILD_ID.test.bind(DiscordRegex.GUILD_ID))
             : undefined;
     }
+
+    protected async context(): Promise<InteractionContextType[]> {
+
+        const enumValues = Object.values(InteractionContextType)
+            .filter((v): v is InteractionContextType => typeof v === 'number');
+
+        const enumKeys = Object.keys(InteractionContextType).filter(
+            key => isNaN(Number(key))
+        );
+        const contextChoices = enumKeys
+            .map((key, index) => `${index}=${key}`)
+            .join(', ');
+
+        const input = await this.requireInput(
+            `Enter context indices (${contextChoices}) separated by commas: `,
+            (val) => {
+                if (!val) return false;
+                if (val == "all") return true;
+                const nums = val
+                    .split(',')
+                    .map(v => parseInt(v.trim(), 10))
+                    .filter(v => !isNaN(v));
+
+                if (nums.length === 0) return false;
+
+                return nums.every(n => enumValues.includes(n));
+            }
+        );
+
+        if (input.toLowerCase() === 'all') {
+            return enumValues;
+        }
+
+        const numbers = input
+            .split(',')
+            .map(v => parseInt(v.trim(), 10))
+            .filter(v => !isNaN(v) && enumValues.includes(v));
+
+        // Enlever les doublons et convertir en enum
+        return Array.from(new Set(numbers)) as InteractionContextType[];
+    }
+
+
 
     private permissionsToBitfield(perms: string[] | undefined): string {
         if (!perms || perms.length === 0) return 0n.toString();
