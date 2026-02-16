@@ -15,17 +15,14 @@ export class SlashCommandGeneratorCLI extends InteractionGeneratorCLI {
 
     protected async execute(): Promise<void> {
         const config: SlashCommandConfig = {
-            type: 1,
             name: "",
             description: "",
-            options: [],
-            dm_permission: false,
-            integration_types: [0, 1],
-            contexts: [0]
+            type: 1,
+            dm_permission: false
         };
 
         console.clear();
-        console.log("📝 1/6 - Base");
+        console.log("📝 1/7 - Base");
         config.name = await this.requireInput(
             "Name (a-z0-9_-, 1-32 chars): ",
             val => /^[a-z0-9_-]{1,32}$/.test(val)
@@ -37,25 +34,32 @@ export class SlashCommandGeneratorCLI extends InteractionGeneratorCLI {
         await this.nsfw(config)
 
         console.clear();
-        console.log("🔐 2/6 - Command Permissions");
+        console.log("🔐 2/7 - Command Permissions");
         await this.addPermissions(config);
 
         console.clear();
-        console.log("💬 3/6 - DM Permissions");
+        console.log("💬 3/7 - DM Permissions");
         config.dm_permission = await this.yesNoInput("Authorize DM ? (y/n): ");
 
         console.clear();
-        console.log("⚙️ 4/6 - Options/Subcommands");
+        console.log("💬 4/7 - Context");
+        const ctx = await this.context()
+        if(ctx.length > 0){
+            config.contexts = ctx
+        }
+
+        console.clear();
+        console.log("⚙️ 5/7 - Options/Subcommands");
         await this.addOptions(config.options!);
 
         console.clear();
-        console.log("⚙️ 5/6 - Guild Specific");
+        console.log("⚙️ 6/7 - Guild Specific");
         if(await this.yesNoInput("Guild Specific ? (y/n): ")) {
             config.guild_ids = await this.optionalGuildIds();
         }
 
         console.clear();
-        console.log("💾 6/6 - Save");
+        console.log("💾 7/7 - Save");
         const filename = await this.requireInput("Filename : ");
         await this.saveFile(FolderName.SLASH_COMMANDS, filename.split(".json")[0] ?? filename, config);
     }

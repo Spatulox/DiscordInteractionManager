@@ -15,15 +15,14 @@ export class ContextMenuGeneratorCLI extends InteractionGeneratorCLI {
 
     protected async execute(): Promise<void> {
         const config: ContextMenuConfig = {
+            dm_permission: true,
             name: "",
-            type: 2,
-            dm_permission: false,
-            integration_types: [0, 1]
+            type: 2
         };
 
         // 1. Type & Nom
         console.clear();
-        console.log("🍽️ 1/5 - Menu Type");
+        console.log("🍽️ 1/6 - Menu Type");
         console.log("2 = User Menu | 3 = Message Menu");
         config.type = parseInt(await this.requireInput("Type (2 or 3): ", val => ["2", "3"].includes(val))) as 2 | 3;
 
@@ -33,24 +32,31 @@ export class ContextMenuGeneratorCLI extends InteractionGeneratorCLI {
 
         // 2. Permissions
         console.clear();
-        console.log("🔐 2/5 - Command Permissions");
+        console.log("🔐 2/6 - Command Permissions");
         await this.addPermissions(config);
 
         // 3. DM
         console.clear();
-        console.log("💬 3/5 - DM Permissions");
+        console.log("💬 3/6 - DM Permissions");
         config.dm_permission = await this.yesNoInput("Authorize in DM ? (y/n): ");
+
+        console.clear();
+        console.log("💬 4/7 - Context");
+        const ctx = await this.context()
+        if(ctx.length > 0){
+            config.contexts = ctx
+        }
 
         // 4. Guild Specific
         console.clear();
-        console.log("⚙️ 4/5 - Guild Specific");
+        console.log("⚙️ 5/6 - Guild Specific");
         if(await this.yesNoInput("Guild Specific ? (y/n): ")) {
             config.guild_ids = await this.optionalGuildIds();
         }
 
         // 5. Save
         console.clear();
-        console.log("💾 5/5 - Save");
+        console.log("💾 6/6 - Save");
         const filename = `${config.name.toLowerCase().replace(/\s+/g, '-')}.json`;
         await this.saveFile(FolderName.CONTEXT_MENU, filename, config);
     }
