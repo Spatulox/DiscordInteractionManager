@@ -103,8 +103,7 @@ export abstract class BaseInteractionManager {
             const rawCmds = await this.rest.get(endpoint) as any[];
             const commands = rawCmds.filter(cmd => this.commandType.includes(cmd.type));
 
-            const commandList: Command[] = commands.map((cmd: any, _index: number) => ({
-                //index: index,
+            const commandList: Command[] = commands.map((cmd: Command, _index: number) => ({
                 name: cmd.name,
                 type: cmd.type,
                 description: cmd.description || 'N/A',
@@ -112,6 +111,8 @@ export abstract class BaseInteractionManager {
                 default_member_permissions_string: Utils.bitfieldToPermissions(cmd.default_member_permissions),
                 id: cmd.id,
                 dm_permission: cmd.dm_permission,
+                contexts: cmd.contexts,
+                integration_types: cmd.integration_types,
                 ...(guildId && { guild_ids: [guildId] })
             }));
 
@@ -255,7 +256,11 @@ export abstract class BaseInteractionManager {
                 continue;
             }
 
-            cmd.default_member_permissions = Utils.permissionsToBitfield(cmd.default_member_permissions_string);
+            if(cmd.default_member_permissions_string){
+                cmd.default_member_permissions = Utils.permissionsToBitfield(cmd.default_member_permissions_string);
+            } else if(!cmd.default_member_permissions) {
+                cmd.default_member_permissions = "0"
+            }
 
             try {
                 if(guild){
@@ -267,7 +272,6 @@ export abstract class BaseInteractionManager {
                         body: cmd
                     });
                 }
-
                 if(cmd.filename){ // should be a thing since we list files with the this.listFromFile()
                     await this.saveInteraction(cmd.filename, cmd)
                 }
