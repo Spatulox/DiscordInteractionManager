@@ -1,5 +1,6 @@
-import {BaseInteractionManager, CommandType} from "./BaseInteractionManager";
+import {BaseInteractionManager} from "./BaseInteractionManager";
 import {FolderName} from "../../type/FolderName";
+import {CommandType} from "../type/InteractionType";
 
 export class CommandManager extends BaseInteractionManager {
     public commandType: number[] = [CommandType.SLASH];

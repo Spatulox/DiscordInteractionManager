@@ -1,5 +1,11 @@
 import {PermissionFlagsBits} from "discord.js";
 
+export enum CommandType {
+    SLASH = 1,
+    USER_CONTEXT_MENU,
+    MESSAGE_CONTEXT_MENU,
+}
+
 export enum InteractionIntegrationType {
     GUILD_INSTALL = 0,
     USER_INSTALL = 1,
@@ -68,14 +74,22 @@ export interface CommandOption {
 
 interface InteractionConfig {
     name: string;
-    type: number;
-    default_member_permissions?: string;
+    type: CommandType;
+    default_member_permissions?: string | bigint | number;
     default_member_permissions_string?: PermissionString[];
     dm_permission: boolean;
     integration_types?: InteractionIntegrationType[];
     contexts?: InteractionContextType[];
     nsfw?: boolean;
     guild_ids?: string[];
+}
+
+export interface Command extends InteractionConfig {
+    description: string;
+    options?: any[];
+    guild_ids?: string[];
+    id?: string;
+    filename?: string
 }
 
 export interface SlashCommandConfig extends InteractionConfig{

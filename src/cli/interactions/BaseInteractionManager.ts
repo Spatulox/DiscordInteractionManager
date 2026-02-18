@@ -7,25 +7,7 @@ import {Log} from "../../utils/Log";
 import {FileManager} from "../../utils/FileManager";
 import {PathUtils} from "../../utils/PathUtils";
 import {RESTGetCurrentApplicationResult } from 'discord-api-types/v10';
-
-// Types
-export interface Command {
-    name: string;
-    description: string;
-    options?: any[];
-    default_member_permissions?: string | bigint | number;
-    default_member_permissions_string?: string[];
-    guildID?: string[];
-    type: CommandType;
-    id?: string;
-    filename?: string
-}
-
-export enum CommandType {
-    SLASH = 1,
-    USER_CONTEXT_MENU,
-    MESSAGE_CONTEXT_MENU,
-}
+import {Command, CommandType} from "../type/InteractionType";
 
 export abstract class BaseInteractionManager {
     public abstract folderPath: string;
@@ -60,7 +42,7 @@ export abstract class BaseInteractionManager {
                 Description: cmd.description,
                 Permissions: cmd.default_member_permissions_string?.join(", "),
                 ID: cmd.id,
-                GuildID: cmd?.guildID ?? "Global",
+                GuildID: cmd?.guild_ids ?? "Global",
             })));
     }
 
@@ -84,7 +66,7 @@ export abstract class BaseInteractionManager {
                 }
                 const cmd = await this.readInteraction(PathUtils.createPathFile(this.folderPath, file));
                 if (!cmd || (cmd.id && avoidDeployedInteraction)) continue;
-                if(guildID && !cmd.guildID?.includes(guildID)) continue
+                if(guildID && !cmd.guild_ids?.includes(guildID)) continue
 
                 const commandWithIndex = {
                     ...cmd,
@@ -128,7 +110,8 @@ export abstract class BaseInteractionManager {
                 default_member_permissions: cmd.default_member_permissions,
                 default_member_permissions_string: this.bitfieldToPermissions(cmd.default_member_permissions),
                 id: cmd.id,
-                ...(guildId && { guildID: [guildId] })
+                dm_permission: cmd.dm_permission,
+                ...(guildId && { guild_ids: [guildId] })
             }));
 
             if(printResult) {
@@ -294,9 +277,9 @@ export abstract class BaseInteractionManager {
     }
 
     private async deploySingleInteraction(cmd: Command, file: string): Promise<void> {
-        const deployToGuilds = cmd.guildID?.length ? cmd.guildID! : [];
+        const deployToGuilds = cmd.guild_ids?.length ? cmd.guild_ids! : [];
         const dataToSend = { ...cmd };
-        delete dataToSend.guildID;
+        delete dataToSend.guild_ids;
 
         if (cmd.default_member_permissions_string && Array.isArray(cmd.default_member_permissions_string)) {
             const bitfield = this.permissionsToBitfield(cmd.default_member_permissions_string);

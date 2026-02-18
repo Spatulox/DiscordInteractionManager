@@ -1,9 +1,10 @@
 import {BaseCLI, MenuSelectionCLI} from "../BaseCLI";
-import { BaseInteractionManager, Command } from "../interactions/BaseInteractionManager";
+import { BaseInteractionManager } from "../interactions/BaseInteractionManager";
 import {GuildListManager} from "../GuildListManager";
 import {Env} from "../../Env";
 import {InteractionListManagerCLI} from "./InteractionListManagerCLI";
 import {Guild} from "discord.js";
+import {Command} from "../type/InteractionType";
 
 export class InteractionManagerCLI extends InteractionListManagerCLI {
 
