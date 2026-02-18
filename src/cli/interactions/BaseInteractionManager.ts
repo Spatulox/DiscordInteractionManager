@@ -1,13 +1,14 @@
 #!/usr/bin/env node
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v10';
-import {Guild, PermissionFlagsBits} from "discord.js";
+import {Guild} from "discord.js";
 import * as fs from 'fs/promises';
 import {Log} from "../../utils/Log";
 import {FileManager} from "../../utils/FileManager";
 import {PathUtils} from "../../utils/PathUtils";
 import {RESTGetCurrentApplicationResult } from 'discord-api-types/v10';
 import {Command, CommandType} from "../type/InteractionType";
+import {Utils} from "../utils/Utils";
 
 export abstract class BaseInteractionManager {
     public abstract folderPath: string;
@@ -40,14 +41,14 @@ export abstract class BaseInteractionManager {
                 Type: cmd.type === CommandType.SLASH ? 'Slash' :
                     cmd.type === CommandType.USER_CONTEXT_MENU ? 'User Context Menu' : 'Message Context Menu',
                 Description: cmd.description,
-                Permissions: cmd.default_member_permissions_string?.join(", "),
+                Permissions: Utils.bitfieldToPermissions(cmd.default_member_permissions).join(", "),
                 ID: cmd.id,
                 GuildID: cmd?.guild_ids ?? "Global",
             })));
     }
 
     async listFromFile(avoidDeployedInteraction: boolean = true, guildID?: string): Promise<Command[]> {
-        let scopeMessage = guildID ? `(guild ${guildID})` : (global)
+        let scopeMessage = guildID ? `(guild ${guildID})` : "(global)"
         console.log(`Listing Local Handlers (${this.folderPath})${avoidDeployedInteraction ? " not":""} deployed on Discord ${scopeMessage}`);
 
         try {
@@ -108,7 +109,7 @@ export abstract class BaseInteractionManager {
                 type: cmd.type,
                 description: cmd.description || 'N/A',
                 default_member_permissions: cmd.default_member_permissions,
-                default_member_permissions_string: this.bitfieldToPermissions(cmd.default_member_permissions),
+                default_member_permissions_string: Utils.bitfieldToPermissions(cmd.default_member_permissions),
                 id: cmd.id,
                 dm_permission: cmd.dm_permission,
                 ...(guildId && { guild_ids: [guildId] })
@@ -253,7 +254,7 @@ export abstract class BaseInteractionManager {
                 continue;
             }
 
-            cmd.default_member_permissions = this.permissionsToBitfield(cmd.default_member_permissions_string);
+            cmd.default_member_permissions = Utils.permissionsToBitfield(cmd.default_member_permissions_string);
 
             try {
                 if(guild){
@@ -282,7 +283,7 @@ export abstract class BaseInteractionManager {
         delete dataToSend.guild_ids;
 
         if (cmd.default_member_permissions_string && Array.isArray(cmd.default_member_permissions_string)) {
-            const bitfield = this.permissionsToBitfield(cmd.default_member_permissions_string);
+            const bitfield = Utils.permissionsToBitfield(cmd.default_member_permissions_string);
             if (bitfield !== undefined) {
                 dataToSend.default_member_permissions = bitfield;
                 cmd.default_member_permissions = bitfield;
@@ -366,37 +367,4 @@ export abstract class BaseInteractionManager {
             }
         }
     }
-
-    private permissionsToBitfield(perms: string[] | undefined): string | undefined {
-        if (!perms || perms.length === 0) return undefined;
-
-        let bits = 0n;
-        for (const name of perms) {
-            const value = (PermissionFlagsBits as Record<string, bigint>)[name];
-            if (!value) {
-                console.warn(`Unknow permission in default_member_permissions: ${name}`);
-                continue;
-            }
-            bits |= value;
-        }
-
-        return bits.toString();
-    }
-
-    private bitfieldToPermissions(bitfield: string | number | bigint | undefined): string[] {
-        if (!bitfield) return [];
-
-        const bits = BigInt(bitfield);
-        const result: string[] = [];
-
-        for (const [name, value] of Object.entries(PermissionFlagsBits)) {
-            if ((bits & value) === value) {
-                result.push(name);
-            }
-        }
-
-        return result;
-    }
-
-
 }

@@ -2,6 +2,7 @@ import {BaseCLI, MenuSelectionCLI} from "../BaseCLI";
 import {PermissionFlagsBits} from "discord.js";
 import {DiscordRegex} from "../../utils/DiscordRegex";
 import {ContextMenuConfig, InteractionContextType, SlashCommandConfig} from "../type/InteractionType";
+import {Utils} from "../utils/Utils";
 
 export abstract class InteractionGeneratorCLI extends BaseCLI {
     protected abstract getTitle(): string
@@ -21,7 +22,7 @@ export abstract class InteractionGeneratorCLI extends BaseCLI {
 
         const permEntries = Object.entries(PermissionFlagsBits);
         const numberedPerms = permEntries.map(([name, _value], index) =>
-            `${index + 1}. ${name}`
+            `${index}. ${name}`
         ).join('\n');
 
         console.log("Valid Permissions:\n" + numberedPerms);
@@ -33,15 +34,15 @@ export abstract class InteractionGeneratorCLI extends BaseCLI {
 
                 return val.split(',').every(numStr => {
                     const num = parseInt(numStr.trim());
-                    return num >= 1 && num <= permEntries.length && !isNaN(num);
+                    return num >= 0 && num <= permEntries.length && !isNaN(num);
                 });
             },
             true
         );
 
         if (!input.trim() || input.toLowerCase() === 'everyone') {
-            config.default_member_permissions_string = [''];
-            config.default_member_permissions = 0n.toString();
+            //config.default_member_permissions_string = [];
+            //config.default_member_permissions = 0n;
             return;
         }
 
@@ -56,7 +57,7 @@ export abstract class InteractionGeneratorCLI extends BaseCLI {
         }
 
         config.default_member_permissions_string = selectedPermNames;
-        config.default_member_permissions = this.permissionsToBitfield(selectedPermNames);
+        config.default_member_permissions = Utils.permissionsToBitfield(selectedPermNames);
     }
 
 
@@ -106,23 +107,5 @@ export abstract class InteractionGeneratorCLI extends BaseCLI {
 
         // Enlever les doublons et convertir en enum
         return Array.from(new Set(numbers)) as InteractionContextType[];
-    }
-
-
-
-    private permissionsToBitfield(perms: string[] | undefined): string {
-        if (!perms || perms.length === 0) return 0n.toString();
-
-        let bits = 0n;
-        for (const name of perms) {
-            const value = (PermissionFlagsBits as Record<string, bigint>)[name];
-            if (!value) {
-                console.warn(`Unknow permission in default_member_permissions: ${name}`);
-                continue;
-            }
-            bits |= value;
-        }
-
-        return bits.toString();
     }
 }
