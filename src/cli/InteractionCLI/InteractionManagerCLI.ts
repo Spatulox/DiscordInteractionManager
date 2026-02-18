@@ -3,6 +3,7 @@ import { BaseInteractionManager, Command } from "../interactions/BaseInteraction
 import {GuildListManager} from "../GuildListManager";
 import {Env} from "../../Env";
 import {InteractionListManagerCLI} from "./InteractionListManagerCLI";
+import {Guild} from "discord.js";
 
 export class InteractionManagerCLI extends InteractionListManagerCLI {
 
@@ -58,12 +59,12 @@ export class InteractionManagerCLI extends InteractionListManagerCLI {
     private async handleDelete(): Promise<void> {
 
         const rep = await this.yesNoInput("Do you want to delete a global command or a specific guild command (y=global/n=specific): ")
-
+        let guild: Guild | null = null
         let commands: Command[]
         if(rep){
             commands = await this.manager.list()
         } else {
-            let guild = await new GuildListManager(Env.clientId, Env.token).chooseGuild()
+            guild = await new GuildListManager(Env.clientId, Env.token).chooseGuild()
             if(!guild){
                 console.log("Error, cannot find guild")
                 return
@@ -74,6 +75,7 @@ export class InteractionManagerCLI extends InteractionListManagerCLI {
         const selected = await this.selectCommands(this.manager, commands);
         if (selected.length === 0) return;
         await this.manager.delete(selected);
+        await this.manager.delete(selected, guild);
     }
 
     private async selectCommands(manager: BaseInteractionManager, commands: Command[]): Promise<Command[]> {

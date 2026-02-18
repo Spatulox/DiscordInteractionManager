@@ -1,16 +1,7 @@
 import { BaseCLI, MenuSelectionCLI } from "./BaseCLI";
 import {REST} from "@discordjs/rest";
-import { Routes, GuildFeature } from 'discord-api-types/v10';
-
-export type Guild = {
-    id: string;
-    name: string;
-    icon: string | null,
-    banner: string | null,
-    owner: boolean,
-    permissions: string,
-    features: GuildFeature[]
-}
+import { Routes } from 'discord-api-types/v10';
+import {Guild} from "discord.js";
 
 export class GuildListManager extends BaseCLI {
     protected guilds: Guild[] = [];

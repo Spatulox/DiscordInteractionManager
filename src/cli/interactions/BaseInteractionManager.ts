@@ -224,7 +224,7 @@ export abstract class BaseInteractionManager {
         console.log(`✅ ${updatedCount}/${commands.length} deployed`);
     }
 
-    async delete(commands: Command[]): Promise<void> {
+    async delete(commands: Command[], guild: Guild | null): Promise<void> {
         console.log(`Deleting ${commands.length} ${this.folderPath}(s)...`);
 
         const IDList: string[] = [];
@@ -238,7 +238,12 @@ export abstract class BaseInteractionManager {
             IDList.push(cmd.id);
 
             try {
-                await this.rest.delete(Routes.applicationCommand(this.clientId, cmd.id));
+                if(guild){
+                    await this.rest.delete(Routes.applicationGuildCommand(this.clientId, guild.id, cmd.id));
+                } else {
+                    await this.rest.delete(Routes.applicationCommand(this.clientId, cmd.id));
+                }
+
                 console.log(`${cmd.name} (${cmd.id.slice(-8)}) deleted`);
             } catch (error) {
                 Log.error(`${cmd.name} (${cmd.id.slice(-8)}): ${(error as Error).message}`);
