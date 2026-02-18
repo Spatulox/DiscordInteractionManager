@@ -4,7 +4,9 @@ export class Utils {
 
     static permissionsToBitfield(perms: string[] | undefined): string | number | undefined {
         if (!perms || perms.length === 0) return undefined;
-
+        if(!Array.isArray(perms)){
+            throw new Error("Invalid default_permission_string : not an array");
+        }
         let bits = 0n;
         for (const name of perms) {
             const value = (PermissionFlagsBits as Record<string, bigint>)[name];
