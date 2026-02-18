@@ -1,10 +1,9 @@
 #!/usr/bin/env node
 import { REST } from '@discordjs/rest';
 import { Routes } from 'discord-api-types/v10';
-import {PermissionFlagsBits} from "discord.js";
+import {Guild, PermissionFlagsBits} from "discord.js";
 import * as fs from 'fs/promises';
 import {Log} from "../../utils/Log";
-import {Guild} from "../GuildListManager";
 import {FileManager} from "../../utils/FileManager";
 import {PathUtils} from "../../utils/PathUtils";
 
@@ -252,20 +251,27 @@ export abstract class BaseInteractionManager {
         await this.removeLocalIdFromFile(IDList);
     }
 
-    async update(commands: Command[]): Promise<void> {
+    async update(commands: Command[], guild: Guild | null): Promise<void> {
         console.log(`Updating ${commands.length} ${this.folderPath}(s)...`);
         for (const cmd of commands) {
             if (!cmd.id) {
-                Log.error(`${cmd.name}: No Discord ID, cannot update the ${this.folderPath}`);
+                Log.error(`${cmd.name}: No Discord ID, cannot update the ${this.folderPath} ${cmd.name}`);
                 continue;
             }
 
             cmd.default_member_permissions = this.permissionsToBitfield(cmd.default_member_permissions_string);
 
             try {
-                await this.rest.patch(Routes.applicationCommand(this.clientId, cmd.id), {
-                    body: cmd
-                });
+                if(guild){
+                    await this.rest.patch(Routes.applicationGuildCommand(this.clientId, guild.id, cmd.id), {
+                        body: cmd
+                    });
+                } else {
+                    await this.rest.patch(Routes.applicationCommand(this.clientId, cmd.id), {
+                        body: cmd
+                    });
+                }
+
                 if(cmd.filename){ // should be a thing since we list files with the this.listFromFile()
                     await this.saveInteraction(cmd.filename, cmd)
                 }

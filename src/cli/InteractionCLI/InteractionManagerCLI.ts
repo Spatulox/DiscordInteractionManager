@@ -38,7 +38,7 @@ export class InteractionManagerCLI extends InteractionListManagerCLI {
     }
 
     private async handleUpdate(): Promise<void> {
-        let guild
+        let guild: Guild | null = null
         const rep = await this.yesNoInput("Do you want to update a global command or a specific guild command (y=global/n=specific): ")
 
         console.log('═'.repeat(80));
@@ -53,7 +53,7 @@ export class InteractionManagerCLI extends InteractionListManagerCLI {
         console.log(`ACTUAL LOCAL ${this.manager.folderPath?.toUpperCase()}`)
         const selected = await this.selectCommands(this.manager, await this.manager.listFromFile(false, guild?.id));
         if (selected.length === 0) return;
-        await this.manager.update(selected);
+        await this.manager.update(selected, guild);
     }
 
     private async handleDelete(): Promise<void> {
