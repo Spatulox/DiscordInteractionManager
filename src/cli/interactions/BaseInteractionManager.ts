@@ -209,13 +209,14 @@ export abstract class BaseInteractionManager {
             }
 
             try {
-                await this.deploySingleInteraction(cmd, file);
-                updatedCount++;
+                if(await this.deploySingleInteraction(cmd, file)){
+                    updatedCount++;
+                }
             } catch (error) {
                 Log.error(`Error ${file}: ${(error as Error).message}`);
             }
         }
-        console.log(`✅ ${updatedCount}/${commands.length} deployed`);
+        console.log(`${updatedCount}/${commands.length} deployed`);
     }
 
     async delete(commands: Command[], guild: Guild | null): Promise<void> {
@@ -277,10 +278,11 @@ export abstract class BaseInteractionManager {
         }
     }
 
-    private async deploySingleInteraction(cmd: Command, file: string): Promise<void> {
-        const deployToGuilds = cmd.guild_ids?.length ? cmd.guild_ids! : [];
+    private async deploySingleInteraction(cmd: Command, file: string): Promise<boolean> {
+        const deployToGuilds = cmd.guild_ids?.length ? cmd.guild_ids : [];
         const dataToSend = { ...cmd };
         delete dataToSend.guild_ids;
+        delete dataToSend.filename
 
         if (cmd.default_member_permissions_string && Array.isArray(cmd.default_member_permissions_string)) {
             const bitfield = Utils.permissionsToBitfield(cmd.default_member_permissions_string);
@@ -298,39 +300,30 @@ export abstract class BaseInteractionManager {
 
         // Guild deployment
         if (deployToGuilds.length > 0) {
+            let nb = 0
             for (const guildId of deployToGuilds) {
                 try {
-                    const guildCmds = await this.rest.get(Routes.applicationGuildCommands(this.clientId, guildId)) as any[];
-                    const found = guildCmds.find((c: any) => c.name === cmd.name);
-
-                    if (!cmd.id || !found) {
-                        const resp = await this.rest.post(Routes.applicationGuildCommands(this.clientId, guildId), { body: dataToSend });
-                        cmd.id = (resp as any).id;
-                        await this.saveInteraction(file, cmd);
-                    } else {
-                        await this.rest.patch(Routes.applicationGuildCommand(this.clientId, guildId, found.id), { body: dataToSend });
-                    }
+                    const resp = await this.rest.post(Routes.applicationGuildCommands(this.clientId, guildId), { body: dataToSend });
+                    cmd.id = (resp as any).id;
+                    await this.saveInteraction(file, cmd);
                 } catch (error) {
+                    nb++
                     console.error(`⚠️  Guild ${guildId}: ${(error as Error).message}`);
                 }
             }
+            return nb === 0
         } else {
             // Global deployment
             try {
-                const globalCmds = await this.rest.get(Routes.applicationCommands(this.clientId)) as any[];
-                const found = globalCmds.find((c: any) => c.name === cmd.name);
-
-                if (!cmd.id || !found) {
-                    const resp = await this.rest.post(Routes.applicationCommands(this.clientId), { body: dataToSend });
-                    cmd.id = (resp as any).id;
-                    await this.saveInteraction(file, cmd);
-                } else {
-                    await this.rest.patch(Routes.applicationCommand(this.clientId, found.id), { body: dataToSend });
-                }
+                const resp = await this.rest.post(Routes.applicationCommands(this.clientId), { body: dataToSend });
+                cmd.id = (resp as any).id;
+                await this.saveInteraction(file, cmd);
+                return true
             } catch (error) {
                 console.error(`⚠️  Global: ${(error as Error).message}`);
             }
         }
+        return false
     }
 
     private async readInteraction(filePath: string): Promise<Command | null> {
