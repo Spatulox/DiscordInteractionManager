@@ -74,7 +74,6 @@ export class InteractionManagerCLI extends InteractionListManagerCLI {
 
         const selected = await this.selectCommands(this.manager, commands);
         if (selected.length === 0) return;
-        await this.manager.delete(selected);
         await this.manager.delete(selected, guild);
     }
 
