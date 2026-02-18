@@ -3,6 +3,8 @@ import { BaseInteractionManager } from "../interactions/BaseInteractionManager";
 import {GuildListManager} from "../GuildListManager";
 import {Env} from "../../Env";
 import {Guild} from "discord.js";
+import {PathUtils} from "../../utils/PathUtils";
+import {FileManager} from "../../utils/FileManager";
 
 export class InteractionListManagerCLI extends BaseCLI {
 
@@ -22,6 +24,7 @@ export class InteractionListManagerCLI extends BaseCLI {
             { label: `List Global ${this.manager.folderPath}`, action: () => this.listRemote() },
             { label: `List Specific ${this.manager.folderPath} for a Guild`, action: async () => this.guildListRemote(await new GuildListManager(Env.clientId, Env.token).chooseGuild()) },
             { label: `Count ${this.manager.folderPath} per Guilds`, action: async () => this.guildListAllRemote() },
+            { label: `Save ${this.manager.folderPath} into local file`, action: async () => this.getAndSaveToLocalFile() },
             { label: 'Back', action: () => this.goBack() },
         ];
     }
@@ -43,5 +46,12 @@ export class InteractionListManagerCLI extends BaseCLI {
 
     protected async guildListAllRemote(): Promise<void> {
         await this.manager.listAllGuilds(await new GuildListManager(Env.clientId, Env.token).list(false))
+    }
+
+    protected async getAndSaveToLocalFile(){
+        const commands  = await this.manager.list()
+        for (const cmd of commands) {
+            await FileManager.writeJsonFile(PathUtils.createPathFolder("generated_"+this.manager.folderPath), cmd.name, cmd)
+        }
     }
 }
