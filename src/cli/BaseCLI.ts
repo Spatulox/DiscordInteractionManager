@@ -3,6 +3,7 @@ import readline from "readline";
 import {FileManager} from "../utils/FileManager";
 import {Env} from "../Env";
 import {PathUtils} from "../utils/PathUtils";
+import {CommandManager} from "./interactions/InteractionManager";
 
 export type MenuSelectionCLI = {
     label: string; // The Label for the Menu Choice
@@ -14,6 +15,7 @@ export type MenuSelectionCLI = {
  */
 export abstract class BaseCLI {
     private static _rl: readline.Interface | null = null;
+    private name: string | null = null;
 
     protected get rl() {
         if (!BaseCLI._rl) {
@@ -35,8 +37,12 @@ export abstract class BaseCLI {
     }
 
     protected async showMainMenu(): Promise<void> {
+        if(!this.name){
+            this.name = await new CommandManager(Env.clientId, Env.token).getBotName()
+        }
         console.clear();
         console.log(this.getTitle());
+        console.log(`Connected as "${this.name}"`)
         console.log('═'.repeat(40));
 
         this.menuSelection.forEach((option, index) => {

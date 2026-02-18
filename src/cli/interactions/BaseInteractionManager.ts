@@ -6,6 +6,7 @@ import * as fs from 'fs/promises';
 import {Log} from "../../utils/Log";
 import {FileManager} from "../../utils/FileManager";
 import {PathUtils} from "../../utils/PathUtils";
+import {RESTGetCurrentApplicationResult } from 'discord-api-types/v10';
 
 // Types
 export interface Command {
@@ -38,6 +39,16 @@ export abstract class BaseInteractionManager {
         this.clientId = clientId;
         this.token = token;
         this.rest = new REST({ version: '10' }).setToken(token);
+    }
+
+    async getBotName(): Promise<string> {
+        try {
+            const botUser = await this.rest.get(Routes.currentApplication()) as RESTGetCurrentApplicationResult;
+            return botUser.name;
+        } catch (error) {
+            console.error("Cannot fetch bot name:", error);
+            return "Unknown Bot";
+        }
     }
 
     async printInteraction(cmdList: Command[]): Promise<void> {
