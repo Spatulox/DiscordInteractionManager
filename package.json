@@ -14,9 +14,10 @@
     "url": "https://github.com/Spatulox/DiscordInteractionManager/issues"
   },
   "scripts": {
+    "type-check": "tsc --noEmit",
     "build": "rm -rf dist/ && tsup",
     "patch": "npm run build && npm version patch",
-    "pub": "npm run patch && npm publish --access public",
+    "pub:patch": "npm run patch && npm publish --access public",
     "cli": "node dist/MainCLI.js"
   },
   "license": "Apache-2.0",
