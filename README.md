@@ -51,10 +51,15 @@ DISCORD_BOT_DEV (optional)
 ```
 
 ## Run the tool
-Simply type "dim" in your console (which stands for DiscordInteractionManager)
-```bash
-dim
-```
+> If your using a standard console or VSCode, type "npx dim" :
+> ```bash
+> npx dim
+> ```
+> If your using Webstorm, use the Webstorm console and type "dim" :
+> ```bash
+> dim
+> ```
+> ("dim" stands for DiscordInteractionManager)
 
 You will be greet by a CLI :
 ```
