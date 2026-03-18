@@ -20,7 +20,7 @@ export class Utils {
         return bits.toString();
     }
 
-    static bitfieldToPermissions(bitfield: string | number | bigint | undefined): string[] {
+    static bitfieldToPermissions(bitfield: string | number | null | bigint | undefined): string[] {
         if (!bitfield) return [];
 
         const bits = BigInt(bitfield);

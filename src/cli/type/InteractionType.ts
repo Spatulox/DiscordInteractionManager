@@ -72,28 +72,65 @@ export interface CommandOption {
     autocomplete?: boolean;
 }
 
+interface OnlineInteractionConfigBase {
+    id: string;
+    name: string;
+    version: string;
+    application_id: string,
+    type: number;
+    guild_id?: string;
+    default_member_permissions?: string | bigint | number | null;
+    dm_permission: boolean;
+    integration_types?: InteractionIntegrationType[];
+    contexts?: InteractionContextType[];
+    nsfw?: boolean;
+}
+
+export interface OnlineCommandConfig extends OnlineInteractionConfigBase {
+    description: string,
+    options: CommandOption[],
+    type: 1
+}
+
+export interface OnlineContextMenuConfig extends OnlineInteractionConfigBase {
+    type: 2 | 3
+}
+
+export type OnlineInteractionConfig = OnlineCommandConfig | OnlineContextMenuConfig;
+
+
+
+
+
+
+
+
+
+
+
+
 interface InteractionConfig {
     name: string;
     type: CommandType;
-    default_member_permissions?: string | bigint | number;
+    default_member_permissions?: string | bigint | number | null;
     default_member_permissions_string?: PermissionString[];
     dm_permission: boolean;
     integration_types?: InteractionIntegrationType[];
     contexts?: InteractionContextType[];
     nsfw?: boolean;
-    guild_ids?: string[];
 }
 
 interface LocalCommand extends InteractionConfig {
+    command_scope: string;
     description: string;
     options?: any[];
     filename?: string
 }
 
+export type SpecificCommandId = Record<string, string | null>;
 export interface SpecificGuildCommand extends LocalCommand {
-    guild_ids: string[];
     command_scope: 'guild';
-    id?: Record<string, string>;
+    id?: SpecificCommandId;
 }
 
 export interface GlobalGuildCommand extends LocalCommand {
@@ -102,7 +139,6 @@ export interface GlobalGuildCommand extends LocalCommand {
 }
 
 export type Command = SpecificGuildCommand | GlobalGuildCommand
-
 
 export interface SlashCommandConfig extends InteractionConfig{
     name: string;
