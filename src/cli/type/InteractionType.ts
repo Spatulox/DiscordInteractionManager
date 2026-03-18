@@ -84,13 +84,25 @@ interface InteractionConfig {
     guild_ids?: string[];
 }
 
-export interface Command extends InteractionConfig {
+interface LocalCommand extends InteractionConfig {
     description: string;
     options?: any[];
-    guild_ids?: string[];
-    id?: string;
     filename?: string
 }
+
+export interface SpecificGuildCommand extends LocalCommand {
+    guild_ids: string[];
+    command_scope: 'guild';
+    id?: Record<string, string>;
+}
+
+export interface GlobalGuildCommand extends LocalCommand {
+    command_scope: 'global';
+    id?: string;
+}
+
+export type Command = SpecificGuildCommand | GlobalGuildCommand
+
 
 export interface SlashCommandConfig extends InteractionConfig{
     name: string;
