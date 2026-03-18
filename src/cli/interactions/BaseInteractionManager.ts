@@ -42,17 +42,26 @@ export abstract class BaseInteractionManager {
                     cmd.type === CommandType.USER_CONTEXT_MENU ? 'User Context Menu' : 'Message Context Menu',
                 Description: cmd.description,
                 Permissions: Utils.bitfieldToPermissions(cmd.default_member_permissions).join(", "),
-                ID: cmd.id,
+                ID: (() => {
+                    if (!cmd.id) return 'N/A';
+                    if (typeof cmd.id === 'string') return cmd.id;
+                    return Object.entries(cmd.id)
+                        .map(([guildId, cmdId]) => `${guildId}:${cmdId}`)
+                        .join(', ');
+                })(),
                 GuildID: cmd?.guild_ids ?? "Global",
             })));
     }
 
-    async listFromFile(avoidDeployedInteraction: boolean = true, guildID?: string): Promise<Command[]> {
-        let scopeMessage = guildID ? `(guild ${guildID})` : "(global)"
-        console.log(`Listing Local Handlers (${this.folderPath})${avoidDeployedInteraction ? " not":""} deployed on Discord ${scopeMessage}`);
+    async listFromFile(list: Listing, guildID?: string): Promise<Command[]> {
+        const scopeMessage = guildID ? `(guild ${guildID.slice(-4)})` : "(global)";
+        const isDeployed = list === Listing.DEPLOYED;
+        const isLocal = list === Listing.LOCAL;
+        const isAll = list === Listing.ALL;
+
+        console.log(`Listing Local Handlers (${this.folderPath}) ${isLocal ? "not " : ""}deployed ${isAll ? "and local " : ""}on Discord ${scopeMessage}`);
 
         try {
-            
             const files = await FileManager.listJsonFiles(PathUtils.createPathFolder(this.folderPath));
             if (!files || files.length === 0) {
                 console.log('No files found');

@@ -1,10 +1,11 @@
 import {BaseCLI, MenuSelectionCLI} from "../BaseCLI";
-import { BaseInteractionManager } from "../interactions/BaseInteractionManager";
+import {BaseInteractionManager} from "../interactions/BaseInteractionManager";
 import {GuildListManager} from "../GuildListManager";
 import {Env} from "../../Env";
 import {InteractionListManagerCLI} from "./InteractionListManagerCLI";
 import {Guild} from "discord.js";
 import {Command} from "../type/InteractionType";
+import {Listing} from "../enum/Listing";
 
 export class InteractionManagerCLI extends InteractionListManagerCLI {
 
@@ -33,7 +34,7 @@ export class InteractionManagerCLI extends InteractionListManagerCLI {
     }
 
     private async handleDeploy(): Promise<void> {
-        const selected = await this.selectCommands(this.manager, await this.manager.listFromFile());
+        const selected = await this.selectCommands(this.manager, await this.manager.listFromFile(Listing.LOCAL));
         if (selected.length === 0) return;
         await this.manager.deploy(selected);
     }
@@ -52,7 +53,7 @@ export class InteractionManagerCLI extends InteractionListManagerCLI {
         }
         console.log('═'.repeat(80));
         console.log(`ACTUAL LOCAL ${this.manager.folderPath?.toUpperCase()}`)
-        const selected = await this.selectCommands(this.manager, await this.manager.listFromFile(false, guild?.id));
+        const selected = await this.selectCommands(this.manager, await this.manager.listFromFile(Listing.ALL, guild?.id));
         if (selected.length === 0) return;
         await this.manager.update(selected, guild);
     }
