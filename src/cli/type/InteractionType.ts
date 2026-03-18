@@ -89,11 +89,11 @@ interface OnlineInteractionConfigBase {
 export interface OnlineCommandConfig extends OnlineInteractionConfigBase {
     description: string,
     options: CommandOption[],
-    type: 1
+    type: CommandType.SLASH
 }
 
 export interface OnlineContextMenuConfig extends OnlineInteractionConfigBase {
-    type: 2 | 3
+    type: CommandType.USER_CONTEXT_MENU | CommandType.MESSAGE_CONTEXT_MENU
 }
 
 export type OnlineInteractionConfig = OnlineCommandConfig | OnlineContextMenuConfig;
@@ -109,7 +109,7 @@ export type OnlineInteractionConfig = OnlineCommandConfig | OnlineContextMenuCon
 
 
 
-interface InteractionConfig {
+interface BaseInteractionConfig {
     name: string;
     type: CommandType;
     default_member_permissions?: string | bigint | number | null;
@@ -118,36 +118,38 @@ interface InteractionConfig {
     integration_types?: InteractionIntegrationType[];
     contexts?: InteractionContextType[];
     nsfw?: boolean;
-}
-
-interface LocalCommand extends InteractionConfig {
-    command_scope: string;
-    description: string;
-    options?: any[];
     filename?: string
 }
 
 export type SpecificCommandId = Record<string, string | null>;
-export interface SpecificGuildCommand extends LocalCommand {
+export interface SpecificGuildInteraction {
     command_scope: 'guild';
-    id?: SpecificCommandId;
+    id: SpecificCommandId;
 }
-
-export interface GlobalGuildCommand extends LocalCommand {
+export interface GlobalGuildInteraction {
     command_scope: 'global';
     id?: string;
 }
 
-export type Command = SpecificGuildCommand | GlobalGuildCommand
-
-export interface SlashCommandConfig extends InteractionConfig{
-    name: string;
+export interface SlashLocalCommand extends BaseInteractionConfig {
     description: string;
-    type: 1;
+    type: CommandType.SLASH;
     options?: CommandOption[];
 }
 
-export interface ContextMenuConfig extends InteractionConfig {
-    name: string;
-    type: 2 | 3;
+export interface SlashSpecificGuildCommand extends SlashLocalCommand, SpecificGuildInteraction {}
+export interface SlashGlobalGuildCommand extends SlashLocalCommand, GlobalGuildInteraction {}
+export type SlashCommand = SlashSpecificGuildCommand | SlashGlobalGuildCommand;
+export interface SlashCommandConfigGenerator extends Omit<SlashCommand, ""> {}
+
+
+export interface ContextMenuLocalCommand extends BaseInteractionConfig {
+    type: CommandType.USER_CONTEXT_MENU | CommandType.MESSAGE_CONTEXT_MENU;
 }
+
+export interface ContextMenuSpecificGuildCommand extends ContextMenuLocalCommand, SpecificGuildInteraction {}
+export interface ContextMenuGlobalGuildCommand extends ContextMenuLocalCommand, GlobalGuildInteraction {}
+export type ContextMenuCommand = ContextMenuSpecificGuildCommand | ContextMenuGlobalGuildCommand;
+export interface ContextMenuConfigGenerator extends Omit<ContextMenuCommand, ""> {}
+
+export type Interaction = SlashCommand | ContextMenuCommand;

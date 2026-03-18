@@ -2,10 +2,10 @@ import {BaseCLI, MenuSelectionCLI} from "../BaseCLI";
 import {PermissionFlagsBits} from "discord.js";
 import {DiscordRegex} from "../../utils/DiscordRegex";
 import {
-    ContextMenuConfig,
+    ContextMenuConfigGenerator,
     InteractionContextType,
-    InteractionIntegrationType,
-    SlashCommandConfig
+    InteractionIntegrationType, SlashCommandConfigGenerator,
+    SpecificCommandId
 } from "../type/InteractionType";
 import {Utils} from "../utils/Utils";
 
@@ -16,13 +16,13 @@ export abstract class InteractionGeneratorCLI extends BaseCLI {
 
     protected abstract execute(): Promise<void>;
 
-    protected async nsfw(config: SlashCommandConfig | ContextMenuConfig): Promise<void> {
+    protected async nsfw(config: SlashCommandConfigGenerator | ContextMenuConfigGenerator): Promise<void> {
         if(await this.yesNoInput("NSFW ? (y/n)")){
             config.nsfw = true
         }
     }
 
-    protected async addPermissions(config: SlashCommandConfig | ContextMenuConfig): Promise<void> {
+    protected async addPermissions(config: SlashCommandConfigGenerator | ContextMenuConfigGenerator): Promise<void> {
         console.clear();
 
         const permEntries = Object.entries(PermissionFlagsBits);
@@ -66,10 +66,13 @@ export abstract class InteractionGeneratorCLI extends BaseCLI {
     }
 
 
-    protected async optionalGuildIds(): Promise<string[] | undefined> {
+    protected async optionalGuildIds(): Promise<SpecificCommandId | undefined> {
         const input = await this.prompt("Guild IDs (separated by comma, or 'none' to cancel): ");
         return input.trim() && input.toLowerCase() !== 'none'
-            ? input.split(',').map(id => id.trim()).filter(DiscordRegex.GUILD_ID.test.bind(DiscordRegex.GUILD_ID))
+            ? Object.fromEntries(
+                input.split(',').map(id => id.trim()).filter(DiscordRegex.GUILD_ID.test.bind(DiscordRegex.GUILD_ID))
+                    .map(id => [id, null])
+            )
             : undefined;
     }
 

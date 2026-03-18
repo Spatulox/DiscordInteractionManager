@@ -1,5 +1,5 @@
 import {MenuSelectionCLI} from "../BaseCLI";
-import {ContextMenuConfig} from "../type/InteractionType";
+import {ContextMenuConfigGenerator} from "../type/InteractionType";
 import {InteractionGeneratorCLI} from "./InteractionGeneratorCLI";
 import {FolderName} from "../../type/FolderName";
 
@@ -14,7 +14,9 @@ export class ContextMenuGeneratorCLI extends InteractionGeneratorCLI {
     ];
 
     protected async execute(): Promise<void> {
-        const config: ContextMenuConfig = {
+        const config: ContextMenuConfigGenerator = {
+            command_scope: "global",
+            id: "",
             dm_permission: true,
             name: "",
             type: 2
@@ -58,7 +60,11 @@ export class ContextMenuGeneratorCLI extends InteractionGeneratorCLI {
         console.clear();
         console.log("⚙️ 6/7 - Guild Specific");
         if(await this.yesNoInput("Guild Specific ? (y/n): ")) {
-            config.guild_ids = await this.optionalGuildIds();
+            const id = await this.optionalGuildIds();
+            if(id) {
+                config.id = id
+                config.command_scope = "guild"
+            }
         }
 
         // 5. Save

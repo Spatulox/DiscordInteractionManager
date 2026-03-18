@@ -1,6 +1,12 @@
 import { MenuSelectionCLI } from "../BaseCLI";
 import { FolderName } from "../../type/FolderName";
-import {ChannelType, Choice, CommandOption, DiscordOptionType, SlashCommandConfig} from "../type/InteractionType";
+import {
+    ChannelType,
+    Choice,
+    CommandOption,
+    DiscordOptionType,
+    SlashCommandConfigGenerator
+} from "../type/InteractionType";
 import {InteractionGeneratorCLI} from "./InteractionGeneratorCLI";
 
 export class SlashCommandGeneratorCLI extends InteractionGeneratorCLI {
@@ -14,7 +20,9 @@ export class SlashCommandGeneratorCLI extends InteractionGeneratorCLI {
     ];
 
     protected async execute(): Promise<void> {
-        const config: SlashCommandConfig = {
+        const config: SlashCommandConfigGenerator = {
+            command_scope: "global",
+            id: "",
             name: "",
             description: "",
             type: 1,
@@ -62,7 +70,11 @@ export class SlashCommandGeneratorCLI extends InteractionGeneratorCLI {
         console.clear();
         console.log("⚙️ 6/7 - Guild Specific");
         if(await this.yesNoInput("Guild Specific ? (y/n): ")) {
-            config.guild_ids = await this.optionalGuildIds();
+            const id = await this.optionalGuildIds();
+            if(id) {
+                config.command_scope = "guild"
+                config.id = id
+            }
         }
 
         console.clear();

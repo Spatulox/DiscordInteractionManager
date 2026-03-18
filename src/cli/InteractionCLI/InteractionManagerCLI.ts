@@ -4,7 +4,7 @@ import {GuildListManager} from "../GuildListManager";
 import {Env} from "../../Env";
 import {InteractionListManagerCLI} from "./InteractionListManagerCLI";
 import {Guild} from "discord.js";
-import {Command} from "../type/InteractionType";
+import {Interaction} from "../type/InteractionType";
 import {Listing} from "../enum/Listing";
 
 export class InteractionManagerCLI extends InteractionListManagerCLI {
@@ -63,7 +63,7 @@ export class InteractionManagerCLI extends InteractionListManagerCLI {
 
         const rep = await this.yesNoInput("Do you want to delete a global command or a specific guild command (y=global/n=specific): ")
         let guild: Guild | null = null
-        let commands: Command[]
+        let commands: Interaction[]
         if(rep){
             commands = await this.manager.list()
         } else {
@@ -80,7 +80,7 @@ export class InteractionManagerCLI extends InteractionListManagerCLI {
         await this.manager.delete(selected, guild);
     }
 
-    private async selectCommands(manager: BaseInteractionManager, commands: Command[]): Promise<Command[]> {
+    private async selectCommands(manager: BaseInteractionManager, commands: Interaction[]): Promise<Interaction[]> {
         const handlerManagerType = `${manager.folderPath}(s)`;
 
         if (!commands?.length) {
@@ -95,7 +95,7 @@ export class InteractionManagerCLI extends InteractionListManagerCLI {
         const indices = input.split(',').map(i => parseInt(i.trim())).filter(i => !isNaN(i));
         const selected = indices
             .map(i => commands[i])
-            .filter((cmd): cmd is Command => cmd !== undefined);
+            .filter((cmd): cmd is Interaction => cmd !== undefined);
 
         if (selected.length === 0) {
             console.log('Invalid number');
