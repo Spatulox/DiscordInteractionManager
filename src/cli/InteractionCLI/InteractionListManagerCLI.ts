@@ -25,7 +25,7 @@ export class InteractionListManagerCLI extends BaseCLI {
             { label: `List Specific ${this.manager.folderPath} for a Guild`, action: async () => this.guildListRemote(await new GuildListManager(Env.clientId, Env.token).chooseGuild()) },
             { label: `List ${this.manager.folderPath} for a Guild`, action: async () => this.guildListAllRemote(await new GuildListManager(Env.clientId, Env.token).chooseGuild()) },
             { label: `Count ${this.manager.folderPath} per Guilds`, action: async () => this.guildCountAllRemote() },
-            { label: `Save ${this.manager.folderPath} into local file`, action: async () => this.getAndSaveToLocalFile() },
+            { label: `Save global ${this.manager.folderPath} into local file`, action: async () => this.getAndSaveToLocalFile() },
             { label: 'Back', action: () => this.goBack() },
         ];
     }
