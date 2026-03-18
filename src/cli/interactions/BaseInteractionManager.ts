@@ -1,14 +1,14 @@
 #!/usr/bin/env node
-import { REST } from '@discordjs/rest';
-import { Routes } from 'discord-api-types/v10';
+import {REST} from '@discordjs/rest';
+import {RESTGetCurrentApplicationResult, Routes} from 'discord-api-types/v10';
 import {Guild} from "discord.js";
 import * as fs from 'fs/promises';
 import {Log} from "../../utils/Log";
 import {FileManager} from "../../utils/FileManager";
 import {PathUtils} from "../../utils/PathUtils";
-import {RESTGetCurrentApplicationResult } from 'discord-api-types/v10';
 import {Command, CommandType} from "../type/InteractionType";
 import {Utils} from "../utils/Utils";
+import {Listing} from "../enum/Listing";
 
 export abstract class BaseInteractionManager {
     public abstract folderPath: string;
@@ -118,12 +118,19 @@ export abstract class BaseInteractionManager {
                 description: cmd.description || 'N/A',
                 default_member_permissions: cmd.default_member_permissions,
                 default_member_permissions_string: Utils.bitfieldToPermissions(cmd.default_member_permissions),
-                id: cmd.id,
                 dm_permission: cmd.dm_permission,
                 contexts: cmd.contexts,
                 integration_types: cmd.integration_types,
-                ...(guildId && { guild_ids: [guildId] })
+                ...(guildId ? {
+                    guild_ids: [guildId],
+                    command_scope: 'guild' as const,
+                    id: cmd.id as Record<string, string>,
+                } : {
+                    command_scope: 'global' as const,
+                    id: cmd.id as string,
+                })
             }));
+
 
             if(printResult) {
                 console.log(`✅ ${commandList.length} ${this.folderPath}(s) found\n`);
