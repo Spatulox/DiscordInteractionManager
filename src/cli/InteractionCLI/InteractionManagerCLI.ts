@@ -46,6 +46,7 @@ export class InteractionManagerCLI extends InteractionListManagerCLI {
         console.log('═'.repeat(80));
         console.log(`ACTUAL DEPLOYED ${this.manager.folderPath?.toUpperCase()}`)
         if(rep){
+            console.log("Specific guild interaction cannot be detected here, but can still be updated")
             await this.listRemote()
         } else {
             guild = await new GuildListManager(Env.clientId, Env.token).chooseGuild()
@@ -53,7 +54,7 @@ export class InteractionManagerCLI extends InteractionListManagerCLI {
         }
         console.log('═'.repeat(80));
         console.log(`ACTUAL LOCAL ${this.manager.folderPath?.toUpperCase()}`)
-        const selected = await this.selectCommands(this.manager, await this.manager.listFromFile(Listing.ALL, guild?.id));
+        const selected = await this.selectCommands(this.manager, await this.manager.listFromFile(Listing.DEPLOYED, guild?.id));
         if (selected.length === 0) return;
         await this.manager.update(selected, guild);
     }

@@ -46,7 +46,7 @@ export abstract class BaseInteractionManager {
                     if (!cmd.id) return 'N/A';
                     if (typeof cmd.id === 'string') return cmd.id;
                     return Object.entries(cmd.id)
-                        .map(([guildId, cmdId]) => `${guildId}:${cmdId}`)
+                        .map(([_guildId, cmdId]) => `${cmdId}` /*`${_guildId}:${cmdId}`*/)
                         .join(', ');
                 })(),
                 GuildID: cmd?.guild_ids ?? "Global",
@@ -54,12 +54,9 @@ export abstract class BaseInteractionManager {
     }
 
     async listFromFile(list: Listing, guildID?: string): Promise<Command[]> {
-        const scopeMessage = guildID ? `(guild ${guildID.slice(-4)})` : "(global)";
-        const isDeployed = list === Listing.DEPLOYED;
-        const isLocal = list === Listing.LOCAL;
-        const isAll = list === Listing.ALL;
+        const scopeMessage = guildID ? `(guild ${guildID})` : "(global)";
 
-        console.log(`Listing Local Handlers (${this.folderPath}) ${isLocal ? "not " : ""}deployed ${isAll ? "and local " : ""}on Discord ${scopeMessage}`);
+        console.log(`Listing Local Handlers (${this.folderPath}) ${scopeMessage}`);
 
         try {
             const files = await FileManager.listJsonFiles(PathUtils.createPathFolder(this.folderPath));
@@ -71,25 +68,30 @@ export abstract class BaseInteractionManager {
             const commandList: Command[] = [];
 
             for (const [_index, file] of files.entries()) {
-                if(file.includes("example")){
-                    continue;
-                }
+                if (file.includes("example")) continue;
+
                 const cmd = await this.readInteraction(PathUtils.createPathFile(this.folderPath, file));
-                if (!cmd || (cmd.id && avoidDeployedInteraction)) continue;
-                if(guildID && !cmd.guild_ids?.includes(guildID)) continue
+                if (!cmd) continue;
+                //console.log(cmd)
+                // === LISTING.DEPLOYED === Liste ceux QUI ONT un ID défini
+                if (list === Listing.DEPLOYED && !cmd.id) continue;
+
+                // === LISTING.LOCAL === Liste ceux SANS ID (ou vide pour guildID)
+                if (list === Listing.LOCAL && cmd.id) continue
+
+                // Filtre scope guild
+                if (guildID && !cmd.guild_ids?.includes(guildID)) continue;
 
                 const commandWithIndex = {
                     ...cmd,
-                    //index: index,
                     filename: file
-                };
-                commandList.push(commandWithIndex as Command);
+                } as Command;
+
+                commandList.push(commandWithIndex);
             }
 
-            console.log(`✅ ${commandList.length} local ${this.folderPath}(s) found\n`);
-
+            console.log(`${commandList.length} local ${this.folderPath}(s) found\n`);
             await this.printInteraction(commandList);
-
             return commandList;
         } catch (error) {
             Log.error(`${(error as Error).message}`);
@@ -322,7 +324,7 @@ export abstract class BaseInteractionManager {
                     await this.rest.patch(Routes.applicationGuildCommand(this.clientId, guild.id, commandId), {
                         body: cmd
                     });
-                    console.log(`${cmd.name} updated in guild ${guild.id.slice(-4)}`);
+                    console.log(`${cmd.name} updated in guild ${guild.name} ${guild.id}`);
                 }
                 // Case 2: Global / All Specific guild in the Record
                 else {
@@ -338,11 +340,18 @@ export abstract class BaseInteractionManager {
                         const updatePromises: Promise<any>[] = [];
 
                         for (const [guildId, commandId] of Object.entries(cmd.id)) {
+                            const guild = await this.rest.get(
+                                Routes.guild(guildId)
+                            ) as Guild | null
+                            if(!guild) {
+                                console.error(`Impossible to select guild with ${guildId}`)
+                                continue
+                            }
                             updatePromises.push(
                                 this.rest.patch(Routes.applicationGuildCommand(this.clientId, guildId, commandId), {
                                     body: cmd
                                 }).then(() => {
-                                    console.log(`${cmd.name} updated in guild ${guildId.slice(-4)}`);
+                                    console.log(`${cmd.name} updated in guild ${guild.name} ${guildId}`);
                                 })
                             );
                         }
@@ -407,7 +416,7 @@ export abstract class BaseInteractionManager {
                     newIds[guildId] = (resp as any).id;
                 } catch (error) {
                     nb++;
-                    console.error(`⚠️ Guild ${guildId.slice(-4)}: ${(error as Error).message}`);
+                    console.error(`⚠️ Guild ${guildId}: ${(error as Error).message}`);
                 }
             }
 
