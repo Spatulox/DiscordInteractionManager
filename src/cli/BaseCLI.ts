@@ -4,6 +4,8 @@ import {FileManager} from "../utils/FileManager";
 import {Env} from "../Env";
 import {PathUtils} from "../utils/PathUtils";
 import {CommandManager} from "./interactions/InteractionManager";
+import {FolderName} from "../type/FolderName";
+import {ContextMenuConfig, SlashCommandConfig} from "./type/InteractionType";
 
 export type MenuSelectionCLI = {
     label: string; // The Label for the Menu Choice
@@ -164,25 +166,31 @@ export abstract class BaseCLI {
         return this.execute() // Fallback for MainCLI
     }
 
+    protected async save(folderName: FolderName,config: ContextMenuConfig | SlashCommandConfig): Promise<void> {
+        let tmp: void | -1 = -1
+        while (tmp == -1) {
+            const filename = await this.requireInput("Filename : ");
+            tmp = await this.saveFile(folderName, filename, config);
+        }
+        return tmp
+    }
 
-    protected async saveFile<T>(
+    private async saveFile<T>(
         folderName: string,
         filename: string,
         data: T,
-    ): Promise<void> {
-        let finalFilename = filename;
-        if(await FileManager.readJsonFile(PathUtils.createPathFile(folderName, filename.split(".json")[0] + ".json"))){
-            if (!await this.yesNoInput(`"${finalFilename}" already exists. Overwrite? (y/n): `)) {
-                const timestamp = Date.now();
-                finalFilename = `${filename.replace('.json', '')}-${timestamp}`;
-                console.log(`📝 New filename: ${finalFilename}`);
-            }
-        }
-
+    ): Promise<-1 | void> {
         // 2. Preview + Confirmation
         console.clear();
         console.log("✨ Final JSON preview:");
         console.log(JSON.stringify(data, null, 2));
+
+        let finalFilename = filename;
+        if(await FileManager.readJsonFile(PathUtils.createPathFile(folderName, filename.split(".json")[0] + ".json"))){
+            if (!await this.yesNoInput(`"${finalFilename}" already exists. Overwrite? (y/n): `)) {
+                return -1
+            }
+        }
 
         if (!await this.yesNoInput("\nSave this file? (y/n): ")) {
             console.log("Cancelled");

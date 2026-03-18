@@ -1,7 +1,7 @@
-import { MenuSelectionCLI } from "../BaseCLI";
-import { FolderName } from "../../type/FolderName";
+import {MenuSelectionCLI} from "../BaseCLI";
 import {ContextMenuConfig} from "../type/InteractionType";
 import {InteractionGeneratorCLI} from "./InteractionGeneratorCLI";
+import {FolderName} from "../../type/FolderName";
 
 export class ContextMenuGeneratorCLI extends InteractionGeneratorCLI {
     protected getTitle(): string {
@@ -64,7 +64,6 @@ export class ContextMenuGeneratorCLI extends InteractionGeneratorCLI {
         // 5. Save
         console.clear();
         console.log("💾 7/7 - Save");
-        const filename = await this.requireInput("Filename : ");
-        await this.saveFile(FolderName.CONTEXT_MENU, filename, config);
+        return await this.save(FolderName.CONTEXT_MENU, config)
     }
 }

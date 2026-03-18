@@ -67,8 +67,7 @@ export class SlashCommandGeneratorCLI extends InteractionGeneratorCLI {
 
         console.clear();
         console.log("💾 7/7 - Save");
-        const filename = await this.requireInput("Filename : ");
-        await this.saveFile(FolderName.SLASH_COMMANDS, filename.split(".json")[0] ?? filename, config);
+        return await this.save(FolderName.SLASH_COMMANDS, config)
     }
 
     private async addOptions(options: CommandOption[]): Promise<void> {
