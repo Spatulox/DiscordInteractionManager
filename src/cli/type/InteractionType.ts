@@ -109,7 +109,7 @@ export type OnlineInteractionConfig = OnlineCommandConfig | OnlineContextMenuCon
 
 
 
-interface BaseInteractionConfig {
+export interface BaseInteractionConfig {
     name: string;
     type: CommandType;
     default_member_permissions?: string | bigint | number | null;

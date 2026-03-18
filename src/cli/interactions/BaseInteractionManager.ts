@@ -7,8 +7,9 @@ import {Log} from "../../utils/Log";
 import {FileManager} from "../../utils/FileManager";
 import {PathUtils} from "../../utils/PathUtils";
 import {
-    CommandType, Interaction,
-    OnlineInteractionConfig,
+    BaseInteractionConfig,
+    CommandType, ContextMenuCommand, ContextMenuGlobalGuildCommand, ContextMenuSpecificGuildCommand, Interaction,
+    OnlineInteractionConfig, SlashCommand, SlashGlobalGuildCommand, SlashSpecificGuildCommand,
     SpecificCommandId
 } from "../type/InteractionType";
 import {Utils} from "../utils/Utils";
@@ -534,11 +535,28 @@ export abstract class BaseInteractionManager {
         return false
     }
 
-    private async readInteraction(filePath: string): Promise<Interaction | null> {
+    /*private async readInteraction(filePath: string): Promise<Interaction | null> {
         try {
             const data = await fs.readFile(filePath, 'utf8');
             return JSON.parse(data) as Interaction;
         } catch {
+            return null;
+        }
+    }*/
+
+    private async readInteraction(filePath: string): Promise<Interaction | null> {
+        try {
+            const data = await FileManager.readJsonFile(filePath);
+
+            const validated = this.validateInteraction(data);
+            if (!validated) {
+                console.error(`Invalid interaction file: ${filePath}`);
+                return null;
+            }
+
+            return validated;
+        } catch (error) {
+            console.error(`Error reading ${filePath}:`, error);
             return null;
         }
     }
@@ -588,5 +606,118 @@ export abstract class BaseInteractionManager {
             }
         }
 
+    }
+
+
+    private validateInteraction(data: any): Interaction | null {
+        if (!data || typeof data !== 'object' || !data.name || typeof data.name !== 'string') {
+            throw new Error(`Expected object with 'name' string, got ${typeof data}`);
+        }
+
+        if (data.type === CommandType.SLASH) {
+            const result = this.validateSlashCommand(data);
+            if (!result) {
+                throw new Error(`Expected SlashCommand, got invalid data: ${JSON.stringify(data)}`);
+            }
+            return result;
+        }
+
+        if (data.type === CommandType.USER_CONTEXT_MENU || data.type === CommandType.MESSAGE_CONTEXT_MENU) {
+            const result = this.validateContextMenuCommand(data);
+            if (!result) {
+                throw new Error(`Expected ContextMenuCommand, got invalid data: ${JSON.stringify(data)}`);
+            }
+            return result;
+        }
+
+        throw new Error(`Expected SlashCommand (1) or ContextMenuCommand (2|3), got type ${data.type}`);
+    }
+
+    private validateSlashCommand(data: any): SlashCommand | null {
+        const base = this.validateBaseInteraction(data);
+        if (!base) return null;
+
+        const description = data.description;
+        if (typeof description !== 'string') {
+            throw new Error(`Expected SlashCommand 'description' string, got ${typeof description}`);
+        }
+
+        // Vérifier scope
+        if (data.command_scope === 'guild') {
+            if (!data.id || typeof data.id !== 'object' || Array.isArray(data.id)) {
+                throw new Error(`Expected SlashCommand guild 'id' Record<string, string|null>, got ${typeof data.id}`);
+            }
+            return {
+                ...base,
+                type: CommandType.SLASH,
+                description,
+                options: data.options || [],
+                command_scope: 'guild',
+                id: data.id
+            } as SlashSpecificGuildCommand;
+        } else if (data.command_scope === 'global') {
+            if (typeof data.id !== 'string' && data.id !== undefined) {
+                throw new Error(`Expected SlashCommand global 'id' string|undefined, got ${typeof data.id}`);
+            }
+            return {
+                ...base,
+                type: CommandType.SLASH,
+                description,
+                options: data.options || [],
+                command_scope: 'global',
+                id: data.id
+            } as SlashGlobalGuildCommand;
+        } else {
+            throw new Error(`Expected SlashCommand 'command_scope' 'guild'|'global', got ${data.command_scope}`);
+        }
+    }
+
+    private validateContextMenuCommand(data: any): ContextMenuCommand | null {
+        const base = this.validateBaseInteraction(data);
+        if (!base) return null;
+
+        // Vérifier scope
+        if (data.command_scope === 'guild') {
+            if (!data.id || typeof data.id !== 'object' || Array.isArray(data.id)) {
+                throw new Error(`Expected ContextMenu guild 'id' Record<string, string|null>, got ${typeof data.id}`);
+            }
+            return {
+                ...base,
+                type: data.type! as CommandType.USER_CONTEXT_MENU | CommandType.MESSAGE_CONTEXT_MENU,
+                description: data.description || 'Context menu',
+                command_scope: 'guild',
+                id: data.id
+            } as ContextMenuSpecificGuildCommand;
+        } else if (data.command_scope === 'global') {
+            if (typeof data.id !== 'string' && data.id !== undefined) {
+                throw new Error(`Expected ContextMenu global 'id' string|undefined, got ${typeof data.id}`);
+            }
+            return {
+                ...base,
+                type: data.type! as CommandType.USER_CONTEXT_MENU | CommandType.MESSAGE_CONTEXT_MENU,
+                description: data.description || 'Context menu',
+                command_scope: 'global',
+                id: data.id
+            } as ContextMenuGlobalGuildCommand;
+        } else {
+            throw new Error(`Expected ContextMenu 'command_scope' 'guild'|'global', got ${data.command_scope}`);
+        }
+    }
+
+    private validateBaseInteraction(data: any): Omit<BaseInteractionConfig, 'type'> | null {
+        try {
+            return {
+                name: data.name,
+                default_member_permissions: data.default_member_permissions,
+                default_member_permissions_string: data.default_member_permissions_string,
+                dm_permission: Boolean(data.dm_permission),
+                integration_types: data.integration_types,
+                contexts: data.contexts,
+                nsfw: data.nsfw,
+                filename: data.filename
+            };
+        } catch {
+            throw new Error(`Expected valid BaseInteractionConfig, got invalid base data`);
+        }
     }
 }
