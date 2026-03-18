@@ -23,7 +23,8 @@ export class InteractionListManagerCLI extends BaseCLI {
         this.menuSelection = [
             { label: `List Global ${this.manager.folderPath}`, action: () => this.listRemote() },
             { label: `List Specific ${this.manager.folderPath} for a Guild`, action: async () => this.guildListRemote(await new GuildListManager(Env.clientId, Env.token).chooseGuild()) },
-            { label: `Count ${this.manager.folderPath} per Guilds`, action: async () => this.guildListAllRemote() },
+            { label: `List ${this.manager.folderPath} for a Guild`, action: async () => this.guildListAllRemote(await new GuildListManager(Env.clientId, Env.token).chooseGuild()) },
+            { label: `Count ${this.manager.folderPath} per Guilds`, action: async () => this.guildCountAllRemote() },
             { label: `Save ${this.manager.folderPath} into local file`, action: async () => this.getAndSaveToLocalFile() },
             { label: 'Back', action: () => this.goBack() },
         ];
@@ -44,7 +45,20 @@ export class InteractionListManagerCLI extends BaseCLI {
         await this.manager.listGuild(guild.id)
     }
 
-    protected async guildListAllRemote(): Promise<void> {
+    protected async guildListAllRemote(guild: Guild | null): Promise<void> {
+        if(!guild) {
+            return
+        }
+        let cmd = await this.manager.list(false)
+        let cmd2 = await this.manager.listGuild(guild.id, false)
+
+        console.log("Global Command")
+        await this.manager.printInteraction(cmd)
+        console.log("Specific Command to this guild")
+        await this.manager.printInteraction(cmd2)
+    }
+
+    protected async guildCountAllRemote(): Promise<void> {
         await this.manager.listAllGuilds(await new GuildListManager(Env.clientId, Env.token).list(false))
     }
 
