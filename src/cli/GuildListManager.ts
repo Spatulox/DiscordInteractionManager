@@ -57,6 +57,12 @@ export class GuildListManager extends BaseCLI {
         }
     }
 
+    async getGuild(guildId: string): Promise<Guild | null> {
+        return await this.rest.get(
+            Routes.guild(guildId)
+        ) as Guild | null
+    }
+
     async chooseGuild(): Promise<Guild | null> {
         await this.list()
         console.log("Please select a guild to continue")
