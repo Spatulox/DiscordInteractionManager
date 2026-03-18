@@ -1,7 +1,12 @@
 import {BaseCLI, MenuSelectionCLI} from "../BaseCLI";
 import {PermissionFlagsBits} from "discord.js";
 import {DiscordRegex} from "../../utils/DiscordRegex";
-import {ContextMenuConfig, InteractionContextType, SlashCommandConfig} from "../type/InteractionType";
+import {
+    ContextMenuConfig,
+    InteractionContextType,
+    InteractionIntegrationType,
+    SlashCommandConfig
+} from "../type/InteractionType";
 import {Utils} from "../utils/Utils";
 
 export abstract class InteractionGeneratorCLI extends BaseCLI {
@@ -107,5 +112,46 @@ export abstract class InteractionGeneratorCLI extends BaseCLI {
 
         // Enlever les doublons et convertir en enum
         return Array.from(new Set(numbers)) as InteractionContextType[];
+    }
+
+    protected async integration_context(): Promise<InteractionIntegrationType[]> {
+
+        const enumValues = Object.values(InteractionIntegrationType)
+            .filter((v): v is InteractionIntegrationType => typeof v === 'number');
+
+        const enumKeys = Object.keys(InteractionIntegrationType).filter(
+            key => isNaN(Number(key))
+        );
+        const contextChoices = enumKeys
+            .map((key, index) => `${index}=${key}`)
+            .join(', ');
+
+        const input = await this.requireInput(
+            `Enter integration context indices (${contextChoices}) separated by commas: `,
+            (val) => {
+                if (!val) return false;
+                if (val == "all") return true;
+                const nums = val
+                    .split(',')
+                    .map(v => parseInt(v.trim(), 10))
+                    .filter(v => !isNaN(v));
+
+                if (nums.length === 0) return false;
+
+                return nums.every(n => enumValues.includes(n));
+            }
+        );
+
+        if (input.toLowerCase() === 'all') {
+            return enumValues;
+        }
+
+        const numbers = input
+            .split(',')
+            .map(v => parseInt(v.trim(), 10))
+            .filter(v => !isNaN(v) && enumValues.includes(v));
+
+        // Enlever les doublons et convertir en enum
+        return Array.from(new Set(numbers)) as InteractionIntegrationType[];
     }
 }
