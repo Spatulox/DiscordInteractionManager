@@ -5,7 +5,7 @@ import {Env} from "../Env";
 import {PathUtils} from "../utils/PathUtils";
 import {CommandManager} from "./interactions/InteractionManager";
 import {FolderName} from "../type/FolderName";
-import {ContextMenuConfig, SlashCommandConfig} from "./type/InteractionType";
+import {ContextMenuConfigGenerator, SlashCommandConfigGenerator} from "./type/InteractionType";
 
 export type MenuSelectionCLI = {
     label: string; // The Label for the Menu Choice
@@ -166,7 +166,7 @@ export abstract class BaseCLI {
         return this.execute() // Fallback for MainCLI
     }
 
-    protected async save(folderName: FolderName,config: ContextMenuConfig | SlashCommandConfig): Promise<void> {
+    protected async save(folderName: FolderName,config: ContextMenuConfigGenerator | SlashCommandConfigGenerator): Promise<void> {
         let tmp: void | -1 = -1
         while (tmp == -1) {
             const filename = await this.requireInput("Filename : ");
