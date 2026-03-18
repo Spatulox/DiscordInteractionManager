@@ -240,21 +240,49 @@ export abstract class BaseInteractionManager {
                 continue;
             }
 
-            IDList.push(cmd.id);
+            if (typeof cmd.id === 'string') {
+                IDList.push(cmd.id);
+            } else if (cmd.id && typeof cmd.id === 'object') {
+                Object.values(cmd.id).forEach(cmdId => IDList.push(cmdId));
+            }
 
             try {
-                if(guild){
-                    await this.rest.delete(Routes.applicationGuildCommand(this.clientId, guild.id, cmd.id));
+                let commandId: string | undefined;
+
+                if (typeof cmd.id === 'string') {
+                    commandId = cmd.id;
+                } else if (guild && cmd.id && typeof cmd.id === 'object') {
+                    commandId = cmd.id[guild.id];
+                    if (!commandId) {
+                        console.log(`${cmd.name}: No command ID for guild ${guild.id}`);
+                        continue;
+                    }
                 } else {
-                    await this.rest.delete(Routes.applicationCommand(this.clientId, cmd.id));
+                    Log.error(`${cmd.name}: Invalid ID type for delete`);
+                    continue;
                 }
 
-                console.log(`${cmd.name} (${cmd.id.slice(-8)}) deleted`);
+                if(!commandId){
+                    Log.error(`Command Id is undefined (${commandId}) for ${cmd.name}...`);
+                    continue
+                }
+                if (guild) {
+                    // Guild command
+                    await this.rest.delete(Routes.applicationGuildCommand(this.clientId, guild.id, commandId));
+                } else {
+                    // Global command
+                    await this.rest.delete(Routes.applicationCommand(this.clientId, commandId));
+                }
+
+                console.log(`${cmd.name} for ${guild?.name} deleted`);
             } catch (error) {
-                Log.error(`${cmd.name} (${cmd.id.slice(-8)}): ${(error as Error).message}`);
+                Log.error(`${cmd.name}: ${(error as Error).message}`);
             }
+
         }
-        await this.removeLocalIdFromFile(IDList);
+        if (IDList.length > 0) {
+            await this.removeLocalIdFromFile(IDList);
+        }
     }
 
     async update(commands: Command[], guild: Guild | null): Promise<void> {
@@ -267,24 +295,59 @@ export abstract class BaseInteractionManager {
 
             if(cmd.default_member_permissions_string){
                 cmd.default_member_permissions = Utils.permissionsToBitfield(cmd.default_member_permissions_string);
-            } else if(!cmd.default_member_permissions) {
-                cmd.default_member_permissions = "0"
             }
 
             try {
-                if(guild){
-                    await this.rest.patch(Routes.applicationGuildCommand(this.clientId, guild.id, cmd.id), {
+                // Case 1: Specific Guild
+                if (guild) {
+                    let commandId: string | undefined;
+                    if (typeof cmd.id === 'string') {
+                        commandId = cmd.id;
+                    } else if (cmd.id && typeof cmd.id === 'object') {
+                        commandId = cmd.id[guild.id];
+                    }
+
+                    if (!commandId) {
+                        Log.error(`${cmd.name}: No command ID for guild ${guild.id}`);
+                        continue;
+                    }
+
+                    await this.rest.patch(Routes.applicationGuildCommand(this.clientId, guild.id, commandId), {
                         body: cmd
                     });
-                } else {
-                    await this.rest.patch(Routes.applicationCommand(this.clientId, cmd.id), {
-                        body: cmd
-                    });
+                    console.log(`${cmd.name} updated in guild ${guild.id.slice(-4)}`);
                 }
-                if(cmd.filename){ // should be a thing since we list files with the this.listFromFile()
-                    await this.saveInteraction(cmd.filename, cmd)
+                // Case 2: Global / All Specific guild in the Record
+                else {
+                    // 2a: Global command
+                    if (typeof cmd.id === 'string') {
+                        await this.rest.patch(Routes.applicationCommand(this.clientId, cmd.id), {
+                            body: cmd
+                        });
+                        console.log(`${cmd.name} updated globally`);
+                    }
+                    // 2b: Record Guild
+                    else if (cmd.id && typeof cmd.id === 'object') {
+                        const updatePromises: Promise<any>[] = [];
+
+                        for (const [guildId, commandId] of Object.entries(cmd.id)) {
+                            updatePromises.push(
+                                this.rest.patch(Routes.applicationGuildCommand(this.clientId, guildId, commandId), {
+                                    body: cmd
+                                }).then(() => {
+                                    console.log(`${cmd.name} updated in guild ${guildId.slice(-4)}`);
+                                })
+                            );
+                        }
+
+                        await Promise.allSettled(updatePromises);
+                    }
                 }
-                console.log(`${cmd.name} updated`);
+
+                // Save local file
+                if (cmd.filename) {
+                    await this.saveInteraction(cmd.filename, cmd);
+                }
             } catch (error) {
                 Log.error(`${cmd.name}: ${(error as Error).message}`);
             }
@@ -313,19 +376,50 @@ export abstract class BaseInteractionManager {
 
         // Guild deployment
         if (deployToGuilds.length > 0) {
-            let nb = 0
+            let nb = 0;
+            let newIds: Record<string, string> = {};
+
+
+            const filePath = PathUtils.createPathFile(this.folderPath, file);
+            const fileCmd = await this.readInteraction(filePath);
+            if (!fileCmd) {
+                console.error("Error when reading the file");
+                return false;
+            }
+
+            if (fileCmd.id && typeof fileCmd.id === 'object') {
+                newIds = { ...fileCmd.id };
+            }
+
             for (const guildId of deployToGuilds) {
                 try {
-                    const resp = await this.rest.post(Routes.applicationGuildCommands(this.clientId, guildId), { body: dataToSend });
-                    cmd.id = (resp as any).id;
-                    await this.saveInteraction(file, cmd);
+                    const resp = await this.rest.post(
+                        Routes.applicationGuildCommands(this.clientId, guildId),
+                        { body: dataToSend }
+                    );
+                    newIds[guildId] = (resp as any).id;
                 } catch (error) {
-                    nb++
-                    console.error(`⚠️  Guild ${guildId}: ${(error as Error).message}`);
+                    nb++;
+                    console.error(`⚠️ Guild ${guildId.slice(-4)}: ${(error as Error).message}`);
                 }
             }
-            return nb === 0
-        } else {
+
+
+            const existingGuildIds = fileCmd.guild_ids || [];
+            const mergedGuildIds = Array.from(new Set([...existingGuildIds, ...deployToGuilds]));
+
+            const finalCmd: Command = {
+                ...fileCmd,           // Base
+                ...cmd,               // New Data
+                command_scope: "guild",
+                guild_ids: mergedGuildIds,
+                id: Object.keys(newIds).length > 0 ? newIds : undefined
+            };
+
+            await this.saveInteraction(file, finalCmd);
+            return nb === 0;
+        }
+        else {
             // Global deployment
             try {
                 const resp = await this.rest.post(Routes.applicationCommands(this.clientId), { body: dataToSend });
@@ -365,12 +459,37 @@ export abstract class BaseInteractionManager {
         for (const file of files) {
             const filePath = PathUtils.createPathFile(this.folderPath, file);
             const localCmd = await this.readInteraction(filePath);
+            if (!localCmd?.id) continue;
 
-            if (localCmd && localCmd.id && idListToDelete.includes(localCmd.id)) {
-                delete localCmd.id;
+            let hasDeletion = false;
+
+            // Case 1: id string global
+            if (typeof localCmd.id === 'string') {
+                if (idListToDelete.includes(localCmd.id)) {
+                    delete localCmd.id;
+                    hasDeletion = true;
+                }
+            }
+            // Case 2: id Record guild-specific
+            else if (localCmd.id && typeof localCmd.id === 'object') {
+                const guildIds = Object.keys(localCmd.id);
+                for (const guildId of guildIds) {
+                    const cmdId = localCmd.id[guildId];
+                    if (cmdId && idListToDelete.includes(cmdId)) {
+                        delete localCmd.id[guildId];
+                        hasDeletion = true;
+                    }
+                }
+
+                if (Object.keys(localCmd.id).length === 0) {
+                    delete localCmd.id;
+                }
+            }
+
+            if (hasDeletion) {
                 await this.saveInteraction(file, localCmd);
-                break;
             }
         }
+
     }
 }
