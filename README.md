@@ -87,16 +87,27 @@ Choose an option:
 ## List interactions
 > - List global interaction 
 
-> - List interaction locked to a specific guild
+> - List spcific interaction for a guild
+ 
+> - List all interactions (global and specific for a guild
   
 > - Count the number of interaction by scope**
+
+> - Save global commands in json files
 
 ## Update an interaction
 > - You can update any interaction, by updating the generated file inside the "**./handlers**" folder*
 
 > - Once you updated the generated file, you can use the cli to update the interaction on Discord
 
-> - If you want to change the scope** of an interaction you can delete/add the "**guild_ids**" field in the generated interaction files, just don't forget to delete the old one and deploy the new one. **Normal update will not work**
+> - If you want to change the scope** :
+>   - You have two field : command_scope & id
+>     - command_scope can be "global" ou "guild",
+>     - "id" can have two forms depending on "command_scope" :
+>       - id: {Record<guildId, interactionId | null>} (command_scope = "guild")
+>       - id: string (command_scope = "global")
+      
+>   - **Normal update will not work**
 
 > - If you want to update the permission of the interaction, you need to update the "**default_member_permissions_string**" field with the keyof **PermissionBitFields** of discordjs (or let it empty for everyone), it will automatically update the "**default_member_permissions**" field required by Discord
 
