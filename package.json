@@ -17,8 +17,10 @@
     "type-check": "tsc --noEmit",
     "build": "rm -rf dist/ && tsup",
     "patch": "npm run build && npm version patch",
+    "minor": "npm run build && npm version minor",
     "major": "npm run build && npm version major",
     "pub:patch": "npm run patch && npm publish --access public",
+    "pub:minor": "npm run minor && npm publish --access public",
     "pub:major": "npm run major && npm publish --access public",
     "cli": "node dist/MainCLI.js"
   },
