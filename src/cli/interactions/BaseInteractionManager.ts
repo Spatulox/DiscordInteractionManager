@@ -116,16 +116,15 @@ export abstract class BaseInteractionManager {
                         // Deployed in this guild → skip
                         continue;
                     } else if (cmd.id && cmd.command_scope === "guild") {
+                        //console.log(cmd)
                         // *** FILTRER guild_ids and keep non-deployed ***
-                        const newGuildIds: Record<string, string | null> = {};
+                        const allDeployed = Object.values(cmd.id || {}).every(id => id != null);
+                        if (allDeployed) continue;
 
-                        for (const gId of Object.keys(cmd.id || {})) {
-                            if (!cmd.id![gId]) {  // null
-                                newGuildIds[gId] = null; // Keep the null one because we're only listing the local one still not deployed
-                            }
-                        }
-
-                        cmd.id = newGuildIds;
+                        // Filtre les non-déployés
+                        cmd.id = Object.fromEntries(
+                            Object.entries(cmd.id || {}).filter(([_gId, id]) => id == null)
+                        );
                     }
                 }
                 // Filtre scope guild
