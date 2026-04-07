@@ -65,7 +65,7 @@ export class SlashCommandGeneratorCLI extends InteractionGeneratorCLI {
 
         console.clear();
         console.log("⚙️ 5/7 - Options/Subcommands");
-        await this.addOptions(config.options!);
+        await this.addOptions(config.options);
 
         console.clear();
         console.log("⚙️ 6/7 - Guild Specific");
@@ -82,9 +82,13 @@ export class SlashCommandGeneratorCLI extends InteractionGeneratorCLI {
         return await this.save(FolderName.SLASH_COMMANDS, config)
     }
 
-    private async addOptions(options: CommandOption[]): Promise<void> {
+    private async addOptions(options: CommandOption[] | undefined): Promise<void> {
         const addOptions = await this.yesNoInput("Add options/subcommands ? (y/n): ");
         if (!addOptions) return;
+
+        if(!options){
+            options = []
+        }
 
         while (true) {
             console.clear();
