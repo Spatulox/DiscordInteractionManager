@@ -22,7 +22,8 @@
     "pub:patch": "npm run patch && npm publish --access public",
     "pub:minor": "npm run minor && npm publish --access public",
     "pub:major": "npm run major && npm publish --access public",
-    "cli": "node dist/MainCLI.js"
+    "cli": "node dist/MainCLI.js",
+    "dev": "npm run build && npm run cli"
   },
   "license": "Apache-2.0",
   "dependencies": {
