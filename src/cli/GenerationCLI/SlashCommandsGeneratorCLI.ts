@@ -65,7 +65,10 @@ export class SlashCommandGeneratorCLI extends InteractionGeneratorCLI {
 
         console.clear();
         console.log("⚙️ 5/7 - Options/Subcommands");
-        await this.addOptions(config.options);
+        const result = await this.addOptions();
+        if(result){
+            config.options = result;
+        }
 
         console.clear();
         console.log("⚙️ 6/7 - Guild Specific");
@@ -82,13 +85,11 @@ export class SlashCommandGeneratorCLI extends InteractionGeneratorCLI {
         return await this.save(FolderName.SLASH_COMMANDS, config)
     }
 
-    private async addOptions(options: CommandOption[] | undefined): Promise<void> {
-        const addOptions = await this.yesNoInput("Add options/subcommands ? (y/n): ");
-        if (!addOptions) return;
+    private async addOptions(): Promise<CommandOption[]> {
+        let options: CommandOption[] = [];
 
-        if(!options){
-            options = []
-        }
+        const addOptions = await this.yesNoInput("Add options/subcommands ? (y/n): ");
+        if (!addOptions) return options;
 
         while (true) {
             console.clear();
@@ -118,6 +119,7 @@ export class SlashCommandGeneratorCLI extends InteractionGeneratorCLI {
 
             if (!await this.yesNoInput("Other option ? (y/n): ")) break;
         }
+        return options
     }
 
     private async buildOption(type: DiscordOptionType): Promise<CommandOption> {
@@ -136,8 +138,10 @@ export class SlashCommandGeneratorCLI extends InteractionGeneratorCLI {
         await this.handleOptionType(option, type);
 
         if (type === 1 || type === 2) {
-            option.options = [];
-            await this.addOptions(option.options!);
+            const result = await this.addOptions();
+            if(result){
+                option.options = result;
+            }
         }
 
         return option;
