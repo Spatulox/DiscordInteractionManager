@@ -8,10 +8,10 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/Spatulox/DiscordInteractionManager.git"
+    "url": "https://github.com/spatulox-discord/DiscordInteractionManager.git"
   },
   "bugs": {
-    "url": "https://github.com/Spatulox/DiscordInteractionManager/issues"
+    "url": "https://github.com/spatulox-discord/DiscordInteractionManager/issues"
   },
   "scripts": {
     "type-check": "tsc --noEmit",
