@@ -8,6 +8,7 @@ export default defineConfig([
         outDir: 'dist/',            // dist/cli/MainCLI.js
         sourcemap: false,
         minify: true,                   // CLI optimisé
-        clean: true
+        clean: true,
+        external: ['discord.js', 'discord-api-types', '@discordjs'],
     }
 ])
