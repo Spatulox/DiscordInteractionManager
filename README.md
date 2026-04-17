@@ -63,7 +63,7 @@ DISCORD_BOT_DEV (optional)
 
 You will be greet by a CLI :
 ```
-💠 SimpleDiscordBot CLI
+💠 Discord Interaction Manager CLI
 ════════════════════════════════════════
 1. Manage Interactions
 2. Generate Files

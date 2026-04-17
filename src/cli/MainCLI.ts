@@ -11,7 +11,7 @@ import {Env} from "../Env";
 export class MainCLI extends BaseCLI {
 
     protected getTitle(): string {
-        return "💠 SimpleDiscordBot CLI";
+        return "💠 Discord Interaction Manager CLI";
     }
 
     constructor() {
